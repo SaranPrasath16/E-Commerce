@@ -35,11 +35,11 @@ public class SecurityConfig {
 	        .cors(cors -> cors.disable()) 
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) 
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/user/login", "/user/register", "/user/otp", "/homepage").permitAll()
-                .requestMatchers("/home","/admin/**","/admin/").hasAuthority("ROLE_MAIN_ADMIN")
-                .requestMatchers("/user/**", "/user/").hasAuthority("ROLE_USER")
-                .requestMatchers("/admin/productadmin/**","/admin/productadmin/").hasAnyAuthority("ROLE_MAIN_ADMIN","ROLE_PRODUCT_ADMIN")
-                .anyRequest().authenticated())
+            .requestMatchers("/user/login", "/user/register", "/user/otp", "/homepage").permitAll()
+            .requestMatchers("/home","/admin/superadmin/**","/admin/superadmin/").hasAuthority("ROLE_MAIN_ADMIN")
+            .requestMatchers("/user/**", "/user/").hasAuthority("ROLE_USER")
+            .requestMatchers("/admin/productadmin/**","/admin/productadmin/").hasAnyAuthority("ROLE_PRODUCT_ADMIN","ROLE_MAIN_ADMIN")
+            .anyRequest().authenticated())
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

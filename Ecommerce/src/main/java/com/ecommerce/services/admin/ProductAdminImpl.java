@@ -9,7 +9,6 @@ import com.ecommerce.dto.ProductGetResponseDTO;
 import com.ecommerce.dto.ProductRequestDTO;
 import com.ecommerce.dto.ProductUpdateRequestDTO;
 import com.ecommerce.exceptionhandler.ResourceNotFoundException;
-import com.ecommerce.middleware.JwtAspect;
 import com.ecommerce.model.Product;
 import com.ecommerce.repo.ProductRepo;
 import com.ecommerce.services.product.ProductService;
@@ -34,11 +33,6 @@ public class ProductAdminImpl {
 	}
 
 	public List<ProductGetResponseDTO> getAllProduct() {
-        String userId = JwtAspect.getCurrentUserId();
-        if (userId.isEmpty() || userId ==null) {
-            throw new ResourceNotFoundException("User ID not found in JWT token.");
-        }
-
         List<Product> productList = productService.getAllProducts();
         List<ProductGetResponseDTO> productDTOList = productList.stream()
                 .map(product -> new ProductGetResponseDTO(

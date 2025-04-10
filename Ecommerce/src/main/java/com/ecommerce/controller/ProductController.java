@@ -12,27 +12,30 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
 import com.ecommerce.dto.ProductDeleteResponseDTO;
 import com.ecommerce.dto.ProductGetResponseDTO;
 import com.ecommerce.dto.ProductRequestDTO;
 import com.ecommerce.dto.ProductUpdateRequestDTO;
 import com.ecommerce.middleware.AuthRequired;
+import com.ecommerce.model.Review;
 import com.ecommerce.services.admin.ProductAdminImpl;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ecommerce.services.user.UserImpl;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/admin/productadmin")
 public class ProductController {
 	private final ProductAdminImpl productAdminImpl;
-	
-    public ProductController(ProductAdminImpl productAdminImpl) {
+	private final UserImpl userImpl;
+ 
+    public ProductController(ProductAdminImpl productAdminImpl, UserImpl userImpl) {
 		super();
 		this.productAdminImpl = productAdminImpl;
+		this.userImpl = userImpl;
 	}
-    
-    @GetMapping("/product")
+
+	@GetMapping("/product")
     @AuthRequired
     public ResponseEntity<List<ProductGetResponseDTO>> getAllProduct(HttpServletRequest request) {
         List<ProductGetResponseDTO> productDTOList = productAdminImpl.getAllProduct();
@@ -42,48 +45,62 @@ public class ProductController {
     @PostMapping(value = "/product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @AuthRequired
     public ResponseEntity<String> addProduct(
-            @RequestParam("jsonData") String jsonData,
+            @RequestParam("category") String category,
+            @RequestParam("productName") String productName,
+            @RequestParam("productDescription") String productDescription,
+            @RequestParam("productPrice") double productPrice,
+            @RequestParam("noOfStocks") int noOfStocks,
             @RequestParam("images") MultipartFile[] images,
             HttpServletRequest request) {
-        
-        ObjectMapper objectMapper = new ObjectMapper();
-        ProductRequestDTO productRequestDTO;
-        
-        try {
-            productRequestDTO = objectMapper.readValue(jsonData, ProductRequestDTO.class);
-        } catch (JsonProcessingException e) {
-            return ResponseEntity.badRequest().body("Invalid JSON Data");
-        }
+
+        ProductRequestDTO productRequestDTO = new ProductRequestDTO();
+        productRequestDTO.setCategory(category);
+        productRequestDTO.setProductName(productName);
+        productRequestDTO.setProductDescription(productDescription);
+        productRequestDTO.setProductPrice(productPrice);
+        productRequestDTO.setNoOfStocks(noOfStocks);
 
         String msg = productAdminImpl.addProduct(productRequestDTO, images);
         return ResponseEntity.ok(msg);
     }
-	
+    
     @PutMapping(value = "/product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @AuthRequired
     public ResponseEntity<String> updateByName(
-            @RequestParam("jsonData") String jsonData,
-            @RequestParam("images") MultipartFile[] images,
+            @RequestParam("productName") String productName,
+            @RequestParam("productNewName") String productNewName,
+            @RequestParam("productNewCategory") String productNewCategory,
+            @RequestParam("productNewDescription") String productNewDescription,
+            @RequestParam("productNewPrice") double productNewPrice,
+            @RequestParam("productNewStock") int productNewStock,
+            @RequestParam("imagesToDelete") List<String> imagesToDelete,
+            @RequestParam(value = "images", required = false) MultipartFile[] images,
             HttpServletRequest request) {
-        
-        ObjectMapper objectMapper = new ObjectMapper();
-        ProductUpdateRequestDTO productUpdateRequestDTO;
 
-        try {
-            productUpdateRequestDTO = objectMapper.readValue(jsonData, ProductUpdateRequestDTO.class);
-        } catch (JsonProcessingException e) {
-            return ResponseEntity.badRequest().body("Invalid JSON Data");
-        }
+        ProductUpdateRequestDTO productUpdateRequestDTO = new ProductUpdateRequestDTO();
+        productUpdateRequestDTO.setProductName(productName);
+        productUpdateRequestDTO.setProductNewName(productNewName);
+        productUpdateRequestDTO.setProductNewCategory(productNewCategory);
+        productUpdateRequestDTO.setProductNewDescription(productNewDescription);
+        productUpdateRequestDTO.setProductNewPrice(productNewPrice);
+        productUpdateRequestDTO.setProductNewStock(productNewStock);
+        productUpdateRequestDTO.setImagesToDelete(imagesToDelete);
 
         String msg = productAdminImpl.updateProductByName(productUpdateRequestDTO, images);
         return ResponseEntity.ok(msg);
     }
-    
+
     @DeleteMapping("/product")
     @AuthRequired
     public ResponseEntity<String> deleteByName(@RequestParam("productName") String productName){
         ProductDeleteResponseDTO productDeleteResponseDTO = productAdminImpl.deleteProductByName(productName);
         return ResponseEntity.ok(productDeleteResponseDTO.getProductMsg()+" and the Product Id: "+productDeleteResponseDTO.getId());
+    }
+    
+    @GetMapping("/product/review")
+    public ResponseEntity<List<Review>> getProductReviews(@RequestParam("productId") String productId){
+        List<Review> reviewList = userImpl.getProductReviews(productId);
+        return ResponseEntity.ok(reviewList);
     }
 
 }

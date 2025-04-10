@@ -20,9 +20,12 @@ import com.ecommerce.dto.OrderAddResponseDTO;
 import com.ecommerce.dto.OrderGetResponseDTO;
 import com.ecommerce.dto.ProductDescriptionListResponseDTO;
 import com.ecommerce.dto.ProductGetResponseDTO;
+import com.ecommerce.dto.ReviewRequestDTO;
+import com.ecommerce.dto.ReviewUpdateRequestDTO;
 import com.ecommerce.middleware.AuthRequired;
 import com.ecommerce.model.Cart;
 import com.ecommerce.model.Orders;
+import com.ecommerce.model.Review;
 import com.ecommerce.services.user.UserImpl;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -112,5 +115,32 @@ public class UserController {
     public ResponseEntity<ProductDescriptionListResponseDTO> getProductByPriceRange(@RequestParam("minPrice") double minPrice, @RequestParam("maxPrice") double maxPrice){
         ProductDescriptionListResponseDTO productDescriptionListResponseDTO = userImpl.getProductByPriceRange(minPrice, maxPrice);
         return ResponseEntity.ok(productDescriptionListResponseDTO);
+    }
+    
+    @GetMapping("/product/review")
+    public ResponseEntity<List<Review>> getProductReviews(@RequestParam("productId") String productId){
+        List<Review> reviewList = userImpl.getProductReviews(productId);
+        return ResponseEntity.ok(reviewList);
+    }
+    
+    @PostMapping("/product/review")
+    @AuthRequired
+    public ResponseEntity<String> addReview(@RequestBody ReviewRequestDTO reviewRequestDTO){
+        String msg = userImpl.addProductReviews(reviewRequestDTO);
+        return ResponseEntity.ok(msg);
+    }
+    
+    @PutMapping("/product/review")
+    @AuthRequired
+    public ResponseEntity<String> updateReview(@RequestBody ReviewUpdateRequestDTO reviewUpdateRequestDTO){
+        String msg = userImpl.updateProductReviews(reviewUpdateRequestDTO);
+        return ResponseEntity.ok(msg);
+    }
+    
+    @DeleteMapping("/product/review")
+    @AuthRequired
+    public ResponseEntity<String> deleteReview(@RequestParam("reviewId") String reviewId){
+        String msg = userImpl.deleteProductReviews(reviewId);
+        return ResponseEntity.ok(msg);
     }
 }

@@ -129,7 +129,7 @@ public class ProductService {
         Query query = new Query();
         query.addCriteria(Criteria.where("productName").is(name));
         Product product = mongoTemplate.findOne(query, Product.class);
-
+        
         if (imagesToDelete != null && !imagesToDelete.isEmpty() && product != null) {
             deleteImagesFromProduct(product, imagesToDelete);
         }
@@ -194,5 +194,4 @@ public class ProductService {
 	    
 	    throw new EntityDeletionException("Failed to delete product: Product not found in database");
 	}
-    
 }

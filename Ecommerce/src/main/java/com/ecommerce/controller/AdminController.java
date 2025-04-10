@@ -15,7 +15,7 @@ import com.ecommerce.services.admin.AdminImpl;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
-@RequestMapping("/admin")
+@RequestMapping("/admin/superadmin")
 public class AdminController {
 	
 	private final AdminImpl adminImpl;
