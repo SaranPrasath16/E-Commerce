@@ -142,19 +142,23 @@ public class ProductService {
         if (newName != null) update.set("productName", newName);
         if (newDescription != null) update.set("productDescription", newDescription);
         if (newPrice != 0) update.set("productPrice", newPrice);
-        if (newStock != 0) update.set("noOfStock", newStock);
+        if (newStock != 0) update.set("noOfStocks", newStock);
         
         if (images != null && images.length > 0) {
             List<String> newImageUrls = new ArrayList<>();
             for (MultipartFile image : images) {
-                try {
-                    String imageUrl = cloudinaryService.uploadImage(image);
-                    newImageUrls.add(imageUrl);
-                } catch (IOException e) {
-                    throw new EntityPushException("Failed to upload image to db");
+                if (image != null && !image.isEmpty()) {
+                    try {
+                        String imageUrl = cloudinaryService.uploadImage(image);
+                        newImageUrls.add(imageUrl);
+                    } catch (IOException e) {
+                        throw new EntityPushException("Failed to upload image to db");
+                    }
                 }
             }
-            update.addToSet("imageUrls").each(newImageUrls.toArray());
+            if (!newImageUrls.isEmpty()) {
+                update.addToSet("imageUrls").each(newImageUrls.toArray());
+            }
         }
         UpdateResult result = mongoTemplate.updateFirst(query, update, Product.class);
         System.out.println(result);
@@ -164,7 +168,6 @@ public class ProductService {
             //Product updatedProduct = mongoTemplate.findOne(query, Product.class);
             return "Updated Product Successfully";
         }
-
         throw new EntityUpdationException("Failed to update the product in db");
 	}
 	

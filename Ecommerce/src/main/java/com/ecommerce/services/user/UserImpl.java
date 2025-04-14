@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.ecommerce.dto.CartItemAddRequestDTO;
 import com.ecommerce.dto.CartItemUpdateRequestDTO;
@@ -11,12 +12,12 @@ import com.ecommerce.dto.OrderAddResponseDTO;
 import com.ecommerce.dto.OrderGetResponseDTO;
 import com.ecommerce.dto.ProductDescriptionListResponseDTO;
 import com.ecommerce.dto.ProductGetResponseDTO;
+import com.ecommerce.dto.ReviewGetResponseDTO;
 import com.ecommerce.dto.ReviewRequestDTO;
 import com.ecommerce.dto.ReviewUpdateRequestDTO;
 import com.ecommerce.model.Cart;
 import com.ecommerce.model.Orders;
 import com.ecommerce.model.Product;
-import com.ecommerce.model.Review;
 import com.ecommerce.services.cart.CartService;
 import com.ecommerce.services.order.OrderService;
 import com.ecommerce.services.product.ProductService;
@@ -86,16 +87,16 @@ public class UserImpl {
 	public ProductDescriptionListResponseDTO getProductByPriceRange(double minPrice, double maxPrice) {
         return productService.getProductByPriceRange(minPrice, maxPrice);
 	}
-	public List<Review> getProductReviews(String productId) {
+	public List<ReviewGetResponseDTO> getProductReviews(String productId) {
         return reviewService.getProductReviews(productId);
     }
 
-	public String addProductReviews(ReviewRequestDTO reviewRequestDTO) {
-        return reviewService.addProductReview(reviewRequestDTO);
+	public String addProductReviews(ReviewRequestDTO reviewRequestDTO,MultipartFile[] userImageUrls) {
+        return reviewService.addProductReviews(reviewRequestDTO,userImageUrls);
 	}
 
-	public String updateProductReviews(ReviewUpdateRequestDTO reviewUpdateRequestDTO) {
-        return reviewService.updateProductReview(reviewUpdateRequestDTO);
+	public String updateProductReviews(ReviewUpdateRequestDTO reviewUpdateRequestDTO,MultipartFile[] userImageUrls) {
+        return reviewService.updateProductReview(reviewUpdateRequestDTO,userImageUrls);
 	}
 
 	public String deleteProductReviews(String reviewId) {

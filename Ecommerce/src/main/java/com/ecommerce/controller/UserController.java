@@ -3,6 +3,7 @@ package com.ecommerce.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,19 +14,19 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.multipart.MultipartFile;
 import com.ecommerce.dto.CartItemAddRequestDTO;
 import com.ecommerce.dto.CartItemUpdateRequestDTO;
 import com.ecommerce.dto.OrderAddResponseDTO;
 import com.ecommerce.dto.OrderGetResponseDTO;
 import com.ecommerce.dto.ProductDescriptionListResponseDTO;
 import com.ecommerce.dto.ProductGetResponseDTO;
+import com.ecommerce.dto.ReviewGetResponseDTO;
 import com.ecommerce.dto.ReviewRequestDTO;
 import com.ecommerce.dto.ReviewUpdateRequestDTO;
 import com.ecommerce.middleware.AuthRequired;
 import com.ecommerce.model.Cart;
 import com.ecommerce.model.Orders;
-import com.ecommerce.model.Review;
 import com.ecommerce.services.user.UserImpl;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -118,24 +119,49 @@ public class UserController {
     }
     
     @GetMapping("/product/review")
-    public ResponseEntity<List<Review>> getProductReviews(@RequestParam("productId") String productId){
-        List<Review> reviewList = userImpl.getProductReviews(productId);
+    public ResponseEntity<List<ReviewGetResponseDTO>> getProductReviews(@RequestParam("productId") String productId){
+        List<ReviewGetResponseDTO> reviewList = userImpl.getProductReviews(productId);
         return ResponseEntity.ok(reviewList);
     }
     
-    @PostMapping("/product/review")
+    @PostMapping(value = "/product/review", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @AuthRequired
-    public ResponseEntity<String> addReview(@RequestBody ReviewRequestDTO reviewRequestDTO){
-        String msg = userImpl.addProductReviews(reviewRequestDTO);
+    public ResponseEntity<String> addReview(
+            @RequestParam("productId") String productId,
+            @RequestParam("rating") double rating,
+            @RequestParam("comment") String comment,
+            @RequestParam(value = "userImageUrls", required = false) MultipartFile[] userImageUrls,
+            HttpServletRequest request) {
+
+        ReviewRequestDTO reviewRequestDTO = new ReviewRequestDTO();
+        reviewRequestDTO.setProductId(productId);
+        reviewRequestDTO.setRating(rating);
+        reviewRequestDTO.setComment(comment);
+
+        String msg = userImpl.addProductReviews(reviewRequestDTO, userImageUrls);
         return ResponseEntity.ok(msg);
     }
+
     
-    @PutMapping("/product/review")
+    @PutMapping(value = "/product/review", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @AuthRequired
-    public ResponseEntity<String> updateReview(@RequestBody ReviewUpdateRequestDTO reviewUpdateRequestDTO){
-        String msg = userImpl.updateProductReviews(reviewUpdateRequestDTO);
+    public ResponseEntity<String> updateReview(
+            @RequestParam("reviewId") String reviewId,
+            @RequestParam("rating") double rating,
+            @RequestParam("comment") String comment,
+            @RequestParam(value = "userImageToDelete", required = false) List<String> userImageToDelete,
+            @RequestParam(value = "userImageUrls", required = false) MultipartFile[] userImageUrls) {
+
+        ReviewUpdateRequestDTO reviewUpdateRequestDTO = new ReviewUpdateRequestDTO();
+        reviewUpdateRequestDTO.setReviewId(reviewId);
+        reviewUpdateRequestDTO.setRating(rating);
+        reviewUpdateRequestDTO.setComment(comment);
+        reviewUpdateRequestDTO.setUserImageToDelete(userImageToDelete);
+
+        String msg = userImpl.updateProductReviews(reviewUpdateRequestDTO, userImageUrls);
         return ResponseEntity.ok(msg);
     }
+
     
     @DeleteMapping("/product/review")
     @AuthRequired

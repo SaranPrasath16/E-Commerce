@@ -19,7 +19,7 @@ public class CustomUserDetails implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         String role;
         if (user.isMainAdmin()) {
-            role = "ROLE_MAIN_ADMIN";
+            role = "ROLE_SUPER_ADMIN";
         } 
         else if (user.isProductAdmin()) {
             role = "ROLE_PRODUCT_ADMIN";

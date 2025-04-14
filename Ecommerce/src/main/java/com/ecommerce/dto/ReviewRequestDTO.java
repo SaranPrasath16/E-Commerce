@@ -22,6 +22,7 @@ public class ReviewRequestDTO {
 	public void setComment(String comment) {
 		this.comment = comment;
 	}
+
 	public ReviewRequestDTO(String productId, double rating, String comment) {
 		super();
 		this.productId = productId;

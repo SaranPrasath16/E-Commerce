@@ -33,14 +33,23 @@ public class CloudinaryService {
         try {
 
             cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+            System.out.println("deleted in cloudinary");
         } catch (Exception e) {
             throw new EntityDeletionException("Failed to delete image from db");
         }
     }
 
     public String extractPublicIdFromUrl(String url) {
-        String[] urlParts = url.split("/v");
-        return urlParts[1].split("/")[1].replace(".jpg", "");
+        try {
+            String uploadSegment = "/upload/";
+            int uploadIndex = url.indexOf(uploadSegment);
+            if (uploadIndex == -1) throw new RuntimeException("Invalid Cloudinary URL format");
+            String path = url.substring(uploadIndex + uploadSegment.length());
+            return path.substring(path.indexOf("/") + 1, path.lastIndexOf('.'));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to extract publicId from URL: " + url);
+        }
     }
+
 
 }

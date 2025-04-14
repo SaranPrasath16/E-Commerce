@@ -1,9 +1,19 @@
 package com.ecommerce.dto;
 
+import java.util.List;
+
 public class ReviewUpdateRequestDTO {
     private String reviewId;
     private double rating;
     private String comment;
+    private List<String> userImageToDelete;
+
+	public List<String> getUserImageToDelete() {
+		return userImageToDelete;
+	}
+	public void setUserImageToDelete(List<String> userImageToDelete) {
+		this.userImageToDelete = userImageToDelete;
+	}
 	public String getReviewId() {
 		return reviewId;
 	}
@@ -22,11 +32,12 @@ public class ReviewUpdateRequestDTO {
 	public void setComment(String comment) {
 		this.comment = comment;
 	}
-	public ReviewUpdateRequestDTO(String reviewId, double rating, String comment) {
+	public ReviewUpdateRequestDTO(String reviewId, double rating, String comment, List<String> userImageToDelete) {
 		super();
 		this.reviewId = reviewId;
 		this.rating = rating;
 		this.comment = comment;
+		this.userImageToDelete = userImageToDelete;
 	}
 	public ReviewUpdateRequestDTO() {
 		super();

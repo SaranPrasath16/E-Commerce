@@ -1,6 +1,8 @@
 package com.ecommerce.model;
 
+import java.util.List;
 import java.util.UUID;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.DBRef;
@@ -17,7 +19,14 @@ public class Review {
 	private Product productId;
 	private double rating;
 	private String comment;
+	private List<String> userImageUrls;
 
+	public List<String> getUserImageUrls() {
+		return userImageUrls;
+	}
+	public void setUserImageUrls(List<String> userImageUrls) {
+		this.userImageUrls = userImageUrls;
+	}
 	public String getReviewId() {
 		return reviewId;
 	}
@@ -54,13 +63,15 @@ public class Review {
             this.reviewId = UUID.randomUUID().toString();
         }
 	}
-	public Review(User userId, Product productId, double rating, String comment) {
+	public Review(User userId, Product productId, double rating, String comment, List<String> userImageUrls) {
 		this();
 		this.userId = userId;
 		this.productId = productId;
 		this.rating = rating;
 		this.comment = comment;
+		this.userImageUrls = userImageUrls;
 	}
+
 
 
 }

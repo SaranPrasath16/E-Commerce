@@ -17,10 +17,11 @@ import com.ecommerce.dto.ProductDeleteResponseDTO;
 import com.ecommerce.dto.ProductGetResponseDTO;
 import com.ecommerce.dto.ProductRequestDTO;
 import com.ecommerce.dto.ProductUpdateRequestDTO;
+import com.ecommerce.dto.ReviewGetResponseDTO;
 import com.ecommerce.middleware.AuthRequired;
-import com.ecommerce.model.Review;
 import com.ecommerce.services.admin.ProductAdminImpl;
 import com.ecommerce.services.user.UserImpl;
+
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
@@ -85,6 +86,8 @@ public class ProductController {
         productUpdateRequestDTO.setProductNewPrice(productNewPrice);
         productUpdateRequestDTO.setProductNewStock(productNewStock);
         productUpdateRequestDTO.setImagesToDelete(imagesToDelete);
+        
+        System.out.println(imagesToDelete);
 
         String msg = productAdminImpl.updateProductByName(productUpdateRequestDTO, images);
         return ResponseEntity.ok(msg);
@@ -98,9 +101,10 @@ public class ProductController {
     }
     
     @GetMapping("/product/review")
-    public ResponseEntity<List<Review>> getProductReviews(@RequestParam("productId") String productId){
-        List<Review> reviewList = userImpl.getProductReviews(productId);
+    public ResponseEntity<List<ReviewGetResponseDTO>> getProductReviews(@RequestParam("productId") String productId){
+        List<ReviewGetResponseDTO> reviewList = userImpl.getProductReviews(productId);
         return ResponseEntity.ok(reviewList);
     }
+    
 
 }
