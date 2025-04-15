@@ -1,11 +1,8 @@
 package com.ecommerce.model;
 
-import org.springframework.data.mongodb.core.mapping.DBRef;
-
 public class CartItems {
 	private String name;
-	@DBRef
-	private Product productId;
+	private String productId;
 	private int quantity;
 	private double price;
 	private boolean selectedForPayment;
@@ -22,10 +19,10 @@ public class CartItems {
 	public void setName(String name) {
 		this.name = name;
 	}
-	public Product getProductId() {
+	public String getProductId() {
 		return productId;
 	}
-	public void setProductId(Product productId) {
+	public void setProductId(String productId) {
 		this.productId = productId;
 	}
 	public int getQuantity() {
@@ -40,7 +37,7 @@ public class CartItems {
 	public void setPrice(double price) {
 		this.price = price;
 	}
-	public CartItems(String name, Product productId, int quantity, double price,
+	public CartItems(String name, String productId, int quantity, double price,
 			boolean selectedForPayment) {
 		super();
 		this.name = name;

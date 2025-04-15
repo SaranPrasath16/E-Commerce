@@ -3,18 +3,18 @@ package com.ecommerce.dto;
 import java.util.List;
 
 public class ProductUpdateRequestDTO {
-    private String productName;
+    private String productId;
     private String productNewCategory;
     private String productNewName;
     private String productNewDescription;
     private double productNewPrice;
     private int productNewStock;
     private List<String> imagesToDelete;
-	public String getProductName() {
-		return productName;
+	public String getProductId() {
+		return productId;
 	}
-	public void setProductName(String productName) {
-		this.productName = productName;
+	public void setProductId(String productId) {
+		this.productId = productId;
 	}
 	public String getProductNewCategory() {
 		return productNewCategory;
@@ -52,10 +52,10 @@ public class ProductUpdateRequestDTO {
 	public void setImagesToDelete(List<String> imagesToDelete) {
 		this.imagesToDelete = imagesToDelete;
 	}
-	public ProductUpdateRequestDTO(String productName, String productNewCategory, String productNewName,
+	public ProductUpdateRequestDTO(String productId, String productNewCategory, String productNewName,
 			String productNewDescription, double productNewPrice, int productNewStock, List<String> imagesToDelete) {
 		super();
-		this.productName = productName;
+		this.productId = productId;
 		this.productNewCategory = productNewCategory;
 		this.productNewName = productNewName;
 		this.productNewDescription = productNewDescription;

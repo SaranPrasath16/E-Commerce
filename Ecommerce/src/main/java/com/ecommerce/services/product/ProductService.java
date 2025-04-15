@@ -4,14 +4,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import com.ecommerce.dto.ProductDeleteResponseDTO;
 import com.ecommerce.dto.ProductDescriptionListResponseDTO;
 import com.ecommerce.dto.ProductRequestDTO;
@@ -20,9 +18,7 @@ import com.ecommerce.exceptionhandler.EntityDeletionException;
 import com.ecommerce.exceptionhandler.EntityPushException;
 import com.ecommerce.exceptionhandler.EntityUpdationException;
 import com.ecommerce.exceptionhandler.ResourceNotFoundException;
-import com.ecommerce.model.Categories;
 import com.ecommerce.model.Product;
-import com.ecommerce.repo.CategoryRepo;
 import com.ecommerce.repo.ProductRepo;
 import com.ecommerce.services.cloudinary.CloudinaryService;
 import com.mongodb.client.result.UpdateResult;
@@ -31,16 +27,14 @@ import com.mongodb.client.result.UpdateResult;
 public class ProductService {
 	
 	private final ProductRepo productRepo;
-	private final CategoryRepo categoryRepo;
 	private final CloudinaryService cloudinaryService;
 	private final MongoTemplate mongoTemplate;
 
 	
-	public ProductService(ProductRepo productRepo, CategoryRepo categoryRepo, CloudinaryService cloudinaryService,
+	public ProductService(ProductRepo productRepo, CloudinaryService cloudinaryService,
 			MongoTemplate mongoTemplate) {
 		super();
 		this.productRepo = productRepo;
-		this.categoryRepo = categoryRepo;
 		this.cloudinaryService = cloudinaryService;
 		this.mongoTemplate = mongoTemplate;
 	}
@@ -87,22 +81,22 @@ public class ProductService {
 
 	public String addProduct(ProductRequestDTO productRequestDTO, MultipartFile[] images) {
         
-        List<String> imageUrls = new ArrayList<>();
-        for (MultipartFile image : images) {
-            try {
-                String imageUrl = cloudinaryService.uploadImage(image);
-                imageUrls.add(imageUrl);
-            } catch (IOException e) {
-                throw new EntityPushException("Failed to uplaod image to cloudinary");
-            }
-        }
-        String categoryName=productRequestDTO.getCategory();
-        Categories category = categoryRepo.findCategoryIdByName(categoryName);
-        if (category == null) {
-        	throw new RuntimeException("Category not found: " + categoryName);
-        }
+	    List<String> imageUrls = new ArrayList<>();
+	    
+	    if (images != null && images.length > 0) {
+	        for (MultipartFile image : images) {
+	            if (image != null && !image.isEmpty()) {
+	                try {
+	                    String imageUrl = cloudinaryService.uploadImage(image);
+	                    imageUrls.add(imageUrl);
+	                } catch (IOException e) {
+	                    throw new EntityPushException("Failed to upload image to Cloudinary");
+	                }
+	            }
+	        }
+	    }
         Product product = new Product(
-                category,
+                productRequestDTO.getCategory(),
                 productRequestDTO.getProductName(),
                 productRequestDTO.getProductDescription(),
                 productRequestDTO.getProductPrice(),
@@ -117,32 +111,22 @@ public class ProductService {
             throw new EntityPushException("Failed to add product to database");
 	}
 
-	public String updateProductByName(ProductUpdateRequestDTO productUpdateRequestDTO, MultipartFile[] images) {
-        String name = productUpdateRequestDTO.getProductName();
-        String newCategory = productUpdateRequestDTO.getProductNewCategory();
-        String newName = productUpdateRequestDTO.getProductNewName();
-        String newDescription = productUpdateRequestDTO.getProductNewDescription();
-        double newPrice = productUpdateRequestDTO.getProductNewPrice();
-        int newStock = productUpdateRequestDTO.getProductNewStock();
+	public String updateProductById(ProductUpdateRequestDTO productUpdateRequestDTO, MultipartFile[] images) {
         List<String> imagesToDelete = productUpdateRequestDTO.getImagesToDelete();
         
         Query query = new Query();
-        query.addCriteria(Criteria.where("productName").is(name));
+        query.addCriteria(Criteria.where("_id").is(productUpdateRequestDTO.getProductId()));
         Product product = mongoTemplate.findOne(query, Product.class);
         
         if (imagesToDelete != null && !imagesToDelete.isEmpty() && product != null) {
             deleteImagesFromProduct(product, imagesToDelete);
         }
         Update update = new Update();
-        Categories category = categoryRepo.findCategoryIdByName(newCategory);
-        if (category == null) {
-        	throw new RuntimeException("Category not found: " + newCategory);
-        }
-        if (newCategory != null) update.set("categoryId", category);
-        if (newName != null) update.set("productName", newName);
-        if (newDescription != null) update.set("productDescription", newDescription);
-        if (newPrice != 0) update.set("productPrice", newPrice);
-        if (newStock != 0) update.set("noOfStocks", newStock);
+        if (productUpdateRequestDTO.getProductNewCategory() != null) update.set("category", productUpdateRequestDTO.getProductNewCategory());
+        if (productUpdateRequestDTO.getProductNewName() != null) update.set("productName", productUpdateRequestDTO.getProductNewName());
+        if (productUpdateRequestDTO.getProductNewDescription() != null) update.set("productDescription", productUpdateRequestDTO.getProductNewDescription());
+        if (productUpdateRequestDTO.getProductNewPrice() != 0) update.set("productPrice", productUpdateRequestDTO.getProductNewPrice());
+        if (productUpdateRequestDTO.getProductNewStock() != 0) update.set("noOfStocks", productUpdateRequestDTO.getProductNewStock());
         
         if (images != null && images.length > 0) {
             List<String> newImageUrls = new ArrayList<>();
@@ -164,7 +148,7 @@ public class ProductService {
         System.out.println(result);
         if (result.getModifiedCount() > 0) {
             query = new Query();
-            query.addCriteria(Criteria.where("ProductName").is(newName));
+            query.addCriteria(Criteria.where("_id").is(productUpdateRequestDTO.getProductId()));
             //Product updatedProduct = mongoTemplate.findOne(query, Product.class);
             return "Updated Product Successfully";
         }
@@ -177,7 +161,7 @@ public class ProductService {
         System.out.println(updatedImageUrls);
 
         Query query = new Query();
-        query.addCriteria(Criteria.where("name").is(product.getProductName()));
+        query.addCriteria(Criteria.where("_id").is(product.getProductId()));
 
         Update update = new Update();
         update.set("imageUrls", updatedImageUrls);
@@ -193,8 +177,7 @@ public class ProductService {
 	    if (product.isPresent()) {
 	        productRepo.deleteById(productId);
 	        return new ProductDeleteResponseDTO(productId, "Product Deleted Successfully");
-	    } 
-	    
+	    }     
 	    throw new EntityDeletionException("Failed to delete product: Product not found in database");
 	}
 }

@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.TypeAlias;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection="product")
@@ -13,8 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Product {
 	@Id
 	private String productId;
-	@DBRef
-	private Categories categoryId;
+	private String category;
 	private String productName;
 	private String productDescription;
 	private double productPrice;
@@ -26,11 +24,11 @@ public class Product {
 	public void setProductId(String productId) {
 		this.productId = productId;
 	}
-	public Categories getCategoryId() {
-		return categoryId;
+	public String getCategory() {
+		return category;
 	}
-	public void setCategoryId(Categories categoryId) {
-		this.categoryId = categoryId;
+	public void setCategoryId(String category) {
+		this.category = category;
 	}
 	public String getProductName() {
 		return productName;
@@ -68,10 +66,10 @@ public class Product {
             this.productId = UUID.randomUUID().toString();
         }
 	}
-	public Product(Categories categoryId, String productName, String productDescription, double productPrice,
+	public Product(String category, String productName, String productDescription, double productPrice,
 			int noOfStocks, List<String> imageUrls) {
 		this();
-		this.categoryId = categoryId;
+		this.category = category;
 		this.productName = productName;
 		this.productDescription = productDescription;
 		this.productPrice = productPrice;

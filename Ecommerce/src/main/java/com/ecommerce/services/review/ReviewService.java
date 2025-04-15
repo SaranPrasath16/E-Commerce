@@ -3,13 +3,16 @@ package com.ecommerce.services.review;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 import com.ecommerce.dto.ReviewGetResponseDTO;
 import com.ecommerce.dto.ReviewRequestDTO;
 import com.ecommerce.dto.ReviewUpdateRequestDTO;
@@ -54,26 +57,33 @@ public class ReviewService {
         List<Review> reviewList=reviewRepo.findByProductId(productId);
         System.out.println(reviewList);
         if(!reviewList.isEmpty()){
-            return reviewList.stream()
-                    .map(review -> new ReviewGetResponseDTO(
-                            review.getUserId().getUserName(),
-                            review.getProductId().getProductName(),
-                            review.getRating(),
-                            review.getComment(),
-                            review.getUserImageUrls()
-                    ))
-                    .collect(Collectors.toList());
+        	  return reviewList.stream().map(review -> {
+        	        User user = userRepo.findById(review.getUserId())
+        	                .orElseThrow(() -> new ResourceNotFoundException("User not found for ID: " + review.getUserId()));
+
+        	        Product product = productRepo.findById(review.getProductId())
+        	                .orElseThrow(() -> new ResourceNotFoundException("Product not found for ID: " + review.getProductId()));
+
+        	        return new ReviewGetResponseDTO(
+        	                user.getUserName(),
+        	                product.getProductName(),
+        	                review.getRating(),
+        	                review.getComment(),
+        	                review.getUserImageUrls()
+        	        );
+        	    }).collect(Collectors.toList());
         }
         throw new ResourceNotFoundException("Reviews not found for the product.");
 	}
-
+	
 	public String addProductReviews(ReviewRequestDTO reviewRequestDTO, MultipartFile[] userImageUrls) {
 	    if (reviewRequestDTO.getProductId() == null || reviewRequestDTO.getProductId().isEmpty()) {
 	        throw new InvalidInputException("Product ID is required.");
 	    }
-
-	    Product product = productRepo.findById(reviewRequestDTO.getProductId())
-	            .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+	    Optional<Review> existingReview = reviewRepo.findByUserIdAndProductId(JwtAspect.getCurrentUserId(), reviewRequestDTO.getProductId());
+	    if (existingReview.isPresent()) {
+	        throw new InvalidInputException("You have already reviewed this product.");
+	    }
 
 	    List<String> imageUrls = new ArrayList<>();
 	    if (userImageUrls != null && userImageUrls.length > 0) {
@@ -89,13 +99,10 @@ public class ReviewService {
 	        }
 	    }
 
-	    User user = userRepo.findById(JwtAspect.getCurrentUserId())
-	            .orElseThrow(() -> new RuntimeException("User not found"));
-
 	    Review review = new Review();
-	    review.setProductId(product);
-	    review.setUserId(user);
-	    review.setRating(reviewRequestDTO.getRating());
+	    review.setProductId(reviewRequestDTO.getProductId());
+	    review.setUserId(JwtAspect.getCurrentUserId());
+	    review.setRating(reviewRequestDTO.getRating()<=5?reviewRequestDTO.getRating():5);
 	    review.setComment(reviewRequestDTO.getComment());
 	    review.setUserImageUrls(imageUrls);
 
@@ -115,11 +122,11 @@ public class ReviewService {
 	    String comment = reviewUpdateRequestDTO.getComment();
 	    List<String> userImageToDelete = reviewUpdateRequestDTO.getUserImageToDelete();
 
-	    Review review = reviewRepo.findByReviewId(reviewId);
+	    Review review=reviewRepo.findByReviewId(reviewId);
 	    if (review == null) {
 	        throw new ResourceNotFoundException("Review not found.");
 	    }
-	    if (!review.getUserId().getUserId().equals(userIdFromToken)) {
+	    if (!review.getUserId().equals(userIdFromToken)) {
 	        throw new RuntimeException("You are not authorized to update this review.");
 	    }
 	    if (userImageToDelete != null && !userImageToDelete.isEmpty()) {

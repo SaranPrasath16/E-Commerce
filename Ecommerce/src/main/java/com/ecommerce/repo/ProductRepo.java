@@ -10,7 +10,7 @@ import com.ecommerce.model.Product;
 @Repository
 public interface ProductRepo extends MongoRepository<Product, String>{
 	
-    @Query("{'price':{$gte : ?0, $lte : ?1}}")
+    @Query("{'productPrice':{$gte : ?0, $lte : ?1}}")
     List<Product> findByPriceBetween(double minPrice, double maxPrice);
     
     @Query("{ 'productName' : ?0 }")

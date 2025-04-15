@@ -14,9 +14,7 @@ import com.ecommerce.middleware.JwtAspect;
 import com.ecommerce.model.CartItems;
 import com.ecommerce.model.Cart;
 import com.ecommerce.model.Orders;
-import com.ecommerce.model.User;
 import com.ecommerce.repo.OrderRepo;
-import com.ecommerce.repo.UserRepo;
 import com.ecommerce.services.cart.CartService;
 import com.ecommerce.services.product.ProductService;
 
@@ -26,14 +24,12 @@ public class OrderService {
 	private final CartService cartService;
 	private final ProductService productService;
 	private final OrderRepo orderRepo;
-	private final UserRepo userRepo;
 	
-	public OrderService(CartService cartService, ProductService productService, OrderRepo orderRepo, UserRepo userRepo) {
+	public OrderService(CartService cartService, ProductService productService, OrderRepo orderRepo) {
 		super();
 		this.cartService = cartService;
 		this.productService = productService;
 		this.orderRepo = orderRepo;
-		this.userRepo = userRepo;
 	}
 
 	public OrderAddResponseDTO placeOrder() {
@@ -43,8 +39,6 @@ public class OrderService {
             throw new ResourceNotFoundException("User ID not found in JWT token.");
         }
         Cart cart=cartService.getCart();
-        User user=userRepo.findById(cartId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
         List<CartItems> cartItems = cartService.getCartItems(cartId);
         if (cartItems.isEmpty()) {
             throw new ResourceNotFoundException("No items found in cart");
@@ -56,15 +50,15 @@ public class OrderService {
         LocalDateTime orderDateTime = LocalDateTime.now();
 
         for (CartItems item : cartItems) {
-            if (item.getQuantity() > productService.getAvailableStock(item.getProductId().getProductId())) {
+            if (item.getQuantity() > productService.getAvailableStock(item.getProductId())) {
                 outOfStock.add(item.getName());
                 continue;
             }
             //String productId = item.getProductId().getProductId();
-            Orders order = new Orders(user, cartItems,cart.getTotalAmount(),cart.getCartItems().size(), orderDateTime, "pending");
+            Orders order = new Orders(cartId, cartItems,cart.getTotalAmount(),cart.getCartItems().size(), orderDateTime, "pending");
             Optional<Orders> savedOrder = Optional.ofNullable(orderRepo.save(order));
             if (savedOrder.isPresent()) {
-                productService.updateProductStock(item.getProductId().getProductId(), item.getQuantity());
+                productService.updateProductStock(item.getProductId(), item.getQuantity());
                 successful.add(order.getOrderId());
             } else {
                 failed.add(item.getName());

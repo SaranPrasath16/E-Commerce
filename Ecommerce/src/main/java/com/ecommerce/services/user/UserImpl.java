@@ -44,7 +44,7 @@ public class UserImpl {
         List<Product> productList = productService.getAllProducts();
         List<ProductGetResponseDTO> productDTOList = productList.stream()
                 .map(product -> new ProductGetResponseDTO(
-                        product.getCategoryId().getCategoryName(),
+                        product.getCategory(),
                         product.getProductName(),
                         product.getProductDescription(),
                         product.getProductPrice(),

@@ -2,12 +2,11 @@ package com.ecommerce.services.cart;
 
 import org.springframework.stereotype.Service;
 import com.ecommerce.model.CartItems;
-import com.ecommerce.model.Product;
 
 @Service
 public class CartItemService {
     
-    public CartItems productToCartItem(String name, Product productId, double price, int quantity){
+    public CartItems productToCartItem(String name, String productId, double price, int quantity){
     	CartItems cartItemsModel = new CartItems();
  
         price = price * quantity;

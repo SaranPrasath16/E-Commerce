@@ -4,13 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
-
 import com.ecommerce.dto.CartItemAddRequestDTO;
 import com.ecommerce.dto.CartItemUpdateRequestDTO;
 import com.ecommerce.exceptionhandler.EntityCreationException;
@@ -21,7 +19,6 @@ import com.ecommerce.exceptionhandler.ResourceNotFoundException;
 import com.ecommerce.middleware.JwtAspect;
 import com.ecommerce.model.Cart;
 import com.ecommerce.model.CartItems;
-import com.ecommerce.model.Product;
 import com.ecommerce.repo.CartRepo;
 import com.mongodb.client.result.UpdateResult;
 
@@ -69,16 +66,16 @@ public class CartService {
             throw new ResourceNotFoundException("User ID not found in JWT token.");
         }
 
-        Product productId = cartItemAddRequestDTO.getProductId();
+        String productId = cartItemAddRequestDTO.getProductId();
         int quantity = cartItemAddRequestDTO.getQuantity();
         double price = cartItemAddRequestDTO.getPrice();
         String name = cartItemAddRequestDTO.getName();
         
-        CartItems cartItemsModel = cartItemExistsOrNot(cartId, productId.getProductId());
+        CartItems cartItemsModel = cartItemExistsOrNot(cartId, productId);
         if(cartItemsModel != null) {
             quantity += cartItemsModel.getQuantity();
             price = quantity * price;
-            Query query = new Query(Criteria.where("_id").is(cartId).and("cartItems.productId.productId").is(productId.getProductId()));
+            Query query = new Query(Criteria.where("_id").is(cartId).and("cartItems.productId").is(productId));
             Update update = new Update();
             update.set("cartItems.$.quantity", quantity);
             update.set("cartItems.$.price", price);
@@ -102,11 +99,11 @@ public class CartService {
     }
 	
 	private CartItems cartItemExistsOrNot(String cartId, String productId) {
-        Query query = new Query(Criteria.where("_id").is(cartId).and("cartItems.productId.productId").is(productId));
+        Query query = new Query(Criteria.where("_id").is(cartId).and("cartItems.productId").is(productId));
         Cart cart = mongoTemplate.findOne(query, Cart.class);
         if(cart != null && cart.getCartItems() != null) { 
             for(CartItems item : cart.getCartItems()) {
-                if(item.getProductId().getProductId().equals(productId)) {
+                if(item.getProductId().equals(productId)) {
                     return item;
                 }
             }
@@ -143,15 +140,15 @@ public class CartService {
             throw new ResourceNotFoundException("User ID not found in JWT token.");
         }
 
-        Product productId = cartItemUpdateRequestDTO.getProductId();
+        String productId = cartItemUpdateRequestDTO.getProductId();
         double price = cartItemUpdateRequestDTO.getPrice();
         boolean selection = cartItemUpdateRequestDTO.isSelectedForPayment();
         int quantity = cartItemUpdateRequestDTO.getQuantity();
 
-        CartItems cartItem = cartItemExistsOrNot(cartId, productId.getProductId());
+        CartItems cartItem = cartItemExistsOrNot(cartId, productId);
 
         if (cartItem != null) {
-            Query query = new Query(Criteria.where("_id").is(cartId).and("cartItems.productId.productId").is(productId.getProductId()));
+            Query query = new Query(Criteria.where("_id").is(cartId).and("cartItems.productId").is(productId));
             Update update = new Update();
             update.set("cartItems.$.quantity", quantity);
             update.set("cartItems.$.price", quantity*price);
@@ -211,11 +208,11 @@ public class CartService {
         }
 
         List<String> productIds = cartItems.stream()
-                .map(cartItem -> cartItem.getProductId().getProductId())
+                .map(cartItem -> cartItem.getProductId())
                 .collect(Collectors.toList());
         
         Query query = new Query(Criteria.where("_id").is(cartId));
-        Update update = new Update().pull("cartItems", Query.query(Criteria.where("productId.$id").in(productIds)).getQueryObject());
+        Update update = new Update().pull("cartItems", Query.query(Criteria.where("productId").in(productIds)).getQueryObject());
         UpdateResult result = mongoTemplate.updateFirst(query, update, Cart.class);
         
         if (result.getMatchedCount() == 0) {

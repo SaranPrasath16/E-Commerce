@@ -67,8 +67,8 @@ public class ProductController {
     
     @PutMapping(value = "/product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @AuthRequired
-    public ResponseEntity<String> updateByName(
-            @RequestParam("productName") String productName,
+    public ResponseEntity<String> updateProductById(
+            @RequestParam("productId") String productId,
             @RequestParam("productNewName") String productNewName,
             @RequestParam("productNewCategory") String productNewCategory,
             @RequestParam("productNewDescription") String productNewDescription,
@@ -79,7 +79,7 @@ public class ProductController {
             HttpServletRequest request) {
 
         ProductUpdateRequestDTO productUpdateRequestDTO = new ProductUpdateRequestDTO();
-        productUpdateRequestDTO.setProductName(productName);
+        productUpdateRequestDTO.setProductId(productId);
         productUpdateRequestDTO.setProductNewName(productNewName);
         productUpdateRequestDTO.setProductNewCategory(productNewCategory);
         productUpdateRequestDTO.setProductNewDescription(productNewDescription);
@@ -89,14 +89,14 @@ public class ProductController {
         
         System.out.println(imagesToDelete);
 
-        String msg = productAdminImpl.updateProductByName(productUpdateRequestDTO, images);
+        String msg = productAdminImpl.updateProductById(productUpdateRequestDTO, images);
         return ResponseEntity.ok(msg);
     }
 
     @DeleteMapping("/product")
     @AuthRequired
-    public ResponseEntity<String> deleteByName(@RequestParam("productName") String productName){
-        ProductDeleteResponseDTO productDeleteResponseDTO = productAdminImpl.deleteProductByName(productName);
+    public ResponseEntity<String> deleteByName(@RequestParam("productId") String productId){
+        ProductDeleteResponseDTO productDeleteResponseDTO = productAdminImpl.deleteProductByName(productId);
         return ResponseEntity.ok(productDeleteResponseDTO.getProductMsg()+" and the Product Id: "+productDeleteResponseDTO.getId());
     }
     

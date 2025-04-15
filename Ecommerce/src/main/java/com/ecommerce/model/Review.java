@@ -2,10 +2,8 @@ package com.ecommerce.model;
 
 import java.util.List;
 import java.util.UUID;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.TypeAlias;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "reviews")
@@ -13,10 +11,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Review {
 	@Id
 	private String reviewId;
-	@DBRef
-	private User userId;
-	@DBRef
-	private Product productId;
+	private String userId;
+	private String productId;
 	private double rating;
 	private String comment;
 	private List<String> userImageUrls;
@@ -33,16 +29,16 @@ public class Review {
 	public void setReviewId(String reviewId) {
 		this.reviewId = reviewId;
 	}
-	public User getUserId() {
+	public String getUserId() {
 		return userId;
 	}
-	public void setUserId(User userId) {
+	public void setUserId(String userId) {
 		this.userId = userId;
 	}
-	public Product getProductId() {
+	public String getProductId() {
 		return productId;
 	}
-	public void setProductId(Product productId) {
+	public void setProductId(String productId) {
 		this.productId = productId;
 	}
 	public double getRating() {
@@ -63,7 +59,7 @@ public class Review {
             this.reviewId = UUID.randomUUID().toString();
         }
 	}
-	public Review(User userId, Product productId, double rating, String comment, List<String> userImageUrls) {
+	public Review(String userId, String productId, double rating, String comment, List<String> userImageUrls) {
 		this();
 		this.userId = userId;
 		this.productId = productId;

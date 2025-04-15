@@ -3,10 +3,8 @@ package com.ecommerce.model;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.TypeAlias;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection="orders")
@@ -14,8 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Orders {
 	@Id
 	private String orderId;
-	@DBRef
-	private User userId;
+	private String userId;
 	private List<CartItems> cartItems;
 	private double totalAmount;
 	private int noOfItems;
@@ -40,10 +37,10 @@ public class Orders {
 	public void setOrderId(String orderId) {
 		this.orderId = orderId;
 	}
-	public User getUserId() {
+	public String getUserId() {
 		return userId;
 	}
-	public void setUserId(User userId) {
+	public void setUserId(String userId) {
 		this.userId = userId;
 	}
 	public double getTotalAmount() {
@@ -69,7 +66,7 @@ public class Orders {
             this.orderId = UUID.randomUUID().toString();
         }
 	}
-	public Orders(User userId, List<CartItems> cartItems, double totalAmount,int noOfItems,
+	public Orders(String userId, List<CartItems> cartItems, double totalAmount,int noOfItems,
 			LocalDateTime orderDateTime, String status) {
 		this();
 		this.userId = userId;

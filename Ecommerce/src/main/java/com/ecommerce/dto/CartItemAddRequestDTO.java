@@ -1,16 +1,14 @@
 package com.ecommerce.dto;
 
-import com.ecommerce.model.Product;
-
 public class CartItemAddRequestDTO {
-    private Product productId;
+    private String productId;
     private String name;
     private int quantity;
     private double price;
-	public Product getProductId() {
+	public String getProductId() {
 		return productId;
 	}
-	public void setProductId(Product productId) {
+	public void setProductId(String productId) {
 		this.productId = productId;
 	}
 	public String getName() {
@@ -31,7 +29,7 @@ public class CartItemAddRequestDTO {
 	public void setPrice(double price) {
 		this.price = price;
 	}
-	public CartItemAddRequestDTO(Product productId, String name, int quantity, double price) {
+	public CartItemAddRequestDTO(String productId, String name, int quantity, double price) {
 		super();
 		this.productId = productId;
 		this.name = name;
