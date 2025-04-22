@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import com.ecommerce.dto.ProductDeleteResponseDTO;
 import com.ecommerce.dto.ProductDescriptionListResponseDTO;
+import com.ecommerce.dto.ProductGetResponseDTO;
 import com.ecommerce.dto.ProductRequestDTO;
 import com.ecommerce.dto.ProductUpdateRequestDTO;
 import com.ecommerce.exceptionhandler.EntityDeletionException;
@@ -180,4 +182,47 @@ public class ProductService {
 	    }     
 	    throw new EntityDeletionException("Failed to delete product: Product not found in database");
 	}
+
+	public List<ProductGetResponseDTO> getProductByName(String productName) {
+	    Query query = new Query(Criteria.where("productName").regex(".*" + productName + ".*", "i"));
+
+	    List<Product> products = mongoTemplate.find(query, Product.class);
+	    if (!products.isEmpty()) {
+	        List<ProductGetResponseDTO> responseList = products.stream()
+	                .map(product -> new ProductGetResponseDTO(
+	                        product.getCategory(),
+	                        product.getProductName(),
+	                        product.getProductDescription(),
+	                        product.getProductPrice(),
+	                        product.getNoOfStocks(),
+	                        product.getImageUrls()
+	                ))
+	                .collect(Collectors.toList());
+	        return responseList;
+	    }
+	    throw new ResourceNotFoundException("Failed to find products with specified name.");
+	}
+
+	public List<ProductGetResponseDTO> getProductByCategory(String category) {
+	    Query query = new Query(Criteria.where("category").regex(".*" + category + ".*", "i"));
+
+	    List<Product> products = mongoTemplate.find(query, Product.class);
+	    if (!products.isEmpty()) {
+	        List<ProductGetResponseDTO> responseList = products.stream()
+	                .map(product -> new ProductGetResponseDTO(
+	                        product.getCategory(),
+	                        product.getProductName(),
+	                        product.getProductDescription(),
+	                        product.getProductPrice(),
+	                        product.getNoOfStocks(),
+	                        product.getImageUrls()
+	                ))
+	                .collect(Collectors.toList());
+	        return responseList;
+	    }
+	    throw new ResourceNotFoundException("Failed to find products with specified category.");
+	}
+
+
+
 }

@@ -4,14 +4,20 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import com.ecommerce.dto.OrderAddResponseDTO;
 import com.ecommerce.dto.OrderGetResponseDTO;
 import com.ecommerce.exceptionhandler.EntityDeletionException;
+import com.ecommerce.exceptionhandler.EntityUpdationException;
 import com.ecommerce.exceptionhandler.InvalidInputException;
 import com.ecommerce.exceptionhandler.ResourceNotFoundException;
 import com.ecommerce.exceptionhandler.UnauthorizedException;
@@ -30,6 +36,7 @@ import com.ecommerce.services.product.ProductService;
 import com.ecommerce.services.razorpay.RazorpayService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.client.result.UpdateResult;
 
 @Service
 public class OrderService {
@@ -41,11 +48,14 @@ public class OrderService {
 	private final RazorpayService razorpayService;
 	private final UserRepo userRepo;
 	private final EmailService emailService;
+	private final MongoTemplate mongotemplate;
 	private String paymentId;
 	
 
+
 	public OrderService(CartService cartService, ProductService productService, OrderRepo orderRepo,
-			PaymentRepo paymentRepo, RazorpayService razorpayService, UserRepo userRepo, EmailService emailService) {
+			PaymentRepo paymentRepo, RazorpayService razorpayService, UserRepo userRepo, EmailService emailService,
+			MongoTemplate mongotemplate) {
 		super();
 		this.cartService = cartService;
 		this.productService = productService;
@@ -54,6 +64,7 @@ public class OrderService {
 		this.razorpayService = razorpayService;
 		this.userRepo = userRepo;
 		this.emailService = emailService;
+		this.mongotemplate = mongotemplate;
 	}
 
 	public Map<String, Object> checkout() {
@@ -240,6 +251,44 @@ public class OrderService {
 	        throw new RuntimeException("Failed to parse JSON payload", e);
 	    }
 	}
+
+	public OrderGetResponseDTO getEntireOrders() {
+        List<Orders> orders = orderRepo.findAll();
+        OrderGetResponseDTO orderGetResponseDTO = new OrderGetResponseDTO();
+        orderGetResponseDTO.setOrderList(orders);
+        return orderGetResponseDTO;
+	}
+
+	public OrderGetResponseDTO getOrder(String orderId) {
+	    Orders order = orderRepo.findById(orderId)
+	            .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+	    OrderGetResponseDTO orderGetResponseDTO = new OrderGetResponseDTO();
+	    orderGetResponseDTO.setOrderList(Collections.singletonList(order));
+	    return orderGetResponseDTO;
+	}
+
+	public OrderGetResponseDTO getOrderByStatus(String status) {
+	    List<Orders> orders = orderRepo.findByStatus(status);  
+	    if (!orders.isEmpty()) {
+	        OrderGetResponseDTO orderGetResponseDTO = new OrderGetResponseDTO();
+	        orderGetResponseDTO.setOrderList(orders);
+	        return orderGetResponseDTO;
+	    }	    
+	    throw new ResourceNotFoundException("Failed to fetch orders with provided status: " + status);
+	}
+
+	public String updateOrders(String orderId, String status) {
+        Query query = new Query(Criteria.where("_id").is(orderId));
+        Update update = new Update();
+        update.set("orderStatus", status);
+        UpdateResult updateResult = mongotemplate.updateFirst(query, update, Orders.class);
+        if(updateResult.getModifiedCount() > 0){
+            return "Order updated successfully";
+        }
+        throw new EntityUpdationException("Failed to update order");
+	}
+
+
 
 
 }

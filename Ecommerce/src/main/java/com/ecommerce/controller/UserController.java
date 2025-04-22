@@ -110,7 +110,21 @@ public class UserController {
         return ResponseEntity.ok(msg);
     }
     
-    @GetMapping("/filter")
+    @GetMapping("/search/name")
+    @AuthRequired
+    public ResponseEntity<List<ProductGetResponseDTO>> getProductByName(@RequestParam("product_Name") String productName){
+    	List<ProductGetResponseDTO> productGetResponseDTO = userImpl.getProductByName(productName);
+        return ResponseEntity.ok(productGetResponseDTO);
+    }
+    
+    @GetMapping("/search/category")
+    @AuthRequired
+    public ResponseEntity<List<ProductGetResponseDTO>> getProductsByCategory(@RequestParam("product_Category") String category){
+    	List<ProductGetResponseDTO> productGetResponseDTO = userImpl.getProductByCategory(category);
+        return ResponseEntity.ok(productGetResponseDTO);
+    }
+    
+    @GetMapping("/filter/price")
     public ResponseEntity<ProductDescriptionListResponseDTO> getProductByPriceRange(@RequestParam("min_Price") double minPrice, @RequestParam("max_Price") double maxPrice){
         ProductDescriptionListResponseDTO productDescriptionListResponseDTO = userImpl.getProductByPriceRange(minPrice, maxPrice);
         return ResponseEntity.ok(productDescriptionListResponseDTO);

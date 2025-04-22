@@ -16,7 +16,7 @@ public class EmailService {
     public void sendOtpByEmail(String email, int otp, String userName){
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);
-        message.setFrom("E-Commerce <saranvenkatesan1620@gmail.com>");
+        message.setFrom("QuickPikk <quickpikk1@gmail.com>");
         message.setSubject("Your One-Time Password (OTP) for Verification");
         String emailBody = "Dear "+ userName +",\n\n"
                 + "Your One-Time Password (OTP) for verification is: "+ otp +"\n\n"
@@ -24,7 +24,7 @@ public class EmailService {
                 + "Please do not share this OTP with anyone for security reasons.\n\n"
                 + "If you did not request this OTP, please ignore this email.\n\n"
                 + "Best regards,\n"
-                + "E-Commerce Team";
+                + "QuickPikk Team";
 
         message.setText(emailBody);
         mailSender.send(message);
@@ -33,7 +33,7 @@ public class EmailService {
     public void sendPaymentLink(String email, String userName, String paymentLink) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);
-        message.setFrom("E-Commerce <saranvenkatesan1620@gmail.com>");
+        message.setFrom("QuickPikk <quickpikk1@gmail.com>");
         message.setSubject("Complete Your Payment for Your Order");
 
         String emailBody = "Dear " + userName + ",\n\n"
@@ -44,7 +44,7 @@ public class EmailService {
                 + "Do not share this payment link with anyone for security reasons.\n\n"
                 + "If you did not place this order, please ignore this email.\n\n"
                 + "Best regards,\n"
-                + "E-Commerce Team";
+                + "QuickPikk Team";
 
         message.setText(emailBody);
         mailSender.send(message);
@@ -53,11 +53,11 @@ public class EmailService {
     public void sendAccountCreatedEmail(String email, String userName) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);
-        message.setFrom("E-Commerce <saranvenkatesan1620@gmail.com>");
-        message.setSubject("Welcome to E-Commerce - Your Account Is Ready!");
+        message.setFrom("QuickPikk <quickpikk1@gmail.com>");
+        message.setSubject("Welcome to QuickPikk - Your Account Is Ready!");
 
         String emailBody = "Hi " + userName + ",\n\n"
-                + "Thank you for signing up at E-Commerce! 🛍️\n\n"
+                + "Thank you for signing up at QuickPikk! 🛍️\n\n"
                 + "Your account has been successfully created, and you're now ready to explore our latest collections.\n\n"
                 + "Here's what you can do next:\n"
                 + "- Browse new arrivals\n"
@@ -67,7 +67,7 @@ public class EmailService {
                 + "We’re excited to have you with us!\n"
                 + "Happy shopping! 🛒\n\n"
                 + "Best regards,\n"
-                + "E-Commerce Team";
+                + "QuickPikk Team";
 
         message.setText(emailBody);
         mailSender.send(message);

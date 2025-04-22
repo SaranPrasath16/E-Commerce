@@ -14,6 +14,9 @@ public interface OrderRepo extends MongoRepository<Orders, String> {
     
     @Query(value = "{'_id' : ?0}", delete = true)
     long deleteByOrderId(String orderId);
+    
+    @Query("{'orderStatus': { $regex: ?0, $options: 'i' }}")
+    List<Orders> findByStatus(String status);
 
 
 }

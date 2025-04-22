@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
 import com.ecommerce.dto.ProductDeleteResponseDTO;
 import com.ecommerce.dto.ProductGetResponseDTO;
 import com.ecommerce.dto.ProductRequestDTO;
@@ -20,20 +19,16 @@ import com.ecommerce.dto.ProductUpdateRequestDTO;
 import com.ecommerce.dto.ReviewGetResponseDTO;
 import com.ecommerce.middleware.AuthRequired;
 import com.ecommerce.services.admin.ProductAdminImpl;
-import com.ecommerce.services.user.UserImpl;
-
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/admin/productadmin")
-public class ProductController {
+public class ProductAdminController {
 	private final ProductAdminImpl productAdminImpl;
-	private final UserImpl userImpl;
  
-    public ProductController(ProductAdminImpl productAdminImpl, UserImpl userImpl) {
+    public ProductAdminController(ProductAdminImpl productAdminImpl) {
 		super();
 		this.productAdminImpl = productAdminImpl;
-		this.userImpl = userImpl;
 	}
 
 	@GetMapping("/product")
@@ -102,8 +97,22 @@ public class ProductController {
     
     @GetMapping("/product/review")
     public ResponseEntity<List<ReviewGetResponseDTO>> getProductReviews(@RequestParam("product_Id") String productId){
-        List<ReviewGetResponseDTO> reviewList = userImpl.getProductReviews(productId);
+        List<ReviewGetResponseDTO> reviewList = productAdminImpl.getProductReviews(productId);
         return ResponseEntity.ok(reviewList);
+    }
+    
+    @GetMapping("/product/name")
+    @AuthRequired
+    public ResponseEntity<List<ProductGetResponseDTO>> getProductByName(@RequestParam("product_Name") String productName){
+    	List<ProductGetResponseDTO> productGetResponseDTO = productAdminImpl.getProductByName(productName);
+        return ResponseEntity.ok(productGetResponseDTO);
+    }
+    
+    @GetMapping("/product/category")
+    @AuthRequired
+    public ResponseEntity<List<ProductGetResponseDTO>> getProductsByCategory(@RequestParam("product_Category") String category){
+    	List<ProductGetResponseDTO> productGetResponseDTO = productAdminImpl.getProductByCategory(category);
+        return ResponseEntity.ok(productGetResponseDTO);
     }
     
 

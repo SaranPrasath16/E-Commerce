@@ -106,5 +106,13 @@ public class UserImpl {
 	public String deleteProductReviews(String reviewId) {
         return reviewService.deleteProductReview(reviewId);
 	}
+
+	public List<ProductGetResponseDTO> getProductByName(String productName) {
+		return productService.getProductByName(productName);
+	}
+
+	public List<ProductGetResponseDTO> getProductByCategory(String category) {
+        return productService.getProductByCategory(category);
+	}
 }
 
