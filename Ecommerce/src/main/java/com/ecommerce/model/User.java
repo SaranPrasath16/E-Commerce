@@ -1,10 +1,11 @@
 package com.ecommerce.model;
 
-import java.util.UUID;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.ecommerce.util.IdGenerator;
 
 @Document(collection="user")
 @TypeAlias("User")
@@ -19,7 +20,14 @@ public class User {
 	private String address;
 	private boolean isMainAdmin;
 	private boolean isProductAdmin;
+	private boolean isOrdersAdmin;
 
+	public boolean isOrdersAdmin() {
+		return isOrdersAdmin;
+	}
+	public void setOrdersAdmin(boolean isOrdersAdmin) {
+		this.isOrdersAdmin = isOrdersAdmin;
+	}
 	public String getUserId() {
 		return userId;
 	}
@@ -71,11 +79,11 @@ public class User {
 	public User() {
 		super();
         if (this.userId == null || this.userId.isEmpty()) {
-            this.userId = UUID.randomUUID().toString();
+            this.userId = "USER_" + IdGenerator.generateRandomNumber();
         }		
 	}
 	public User(String userName, String email, String password, long mobile, String address, boolean isMainAdmin,
-			boolean isProductAdmin) {
+			boolean isProductAdmin, boolean isOrdersAdmin) {
 		this();
 		this.userName = userName;
 		this.email = email;
@@ -84,7 +92,9 @@ public class User {
 		this.address = address;
 		this.isMainAdmin = isMainAdmin;
 		this.isProductAdmin = isProductAdmin;
+		this.isOrdersAdmin = isOrdersAdmin;
 	}
+
 
 
 	

@@ -1,11 +1,10 @@
 package com.ecommerce.services.user;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import com.ecommerce.dto.CartItemAddRequestDTO;
 import com.ecommerce.dto.CartItemUpdateRequestDTO;
 import com.ecommerce.dto.OrderAddResponseDTO;
@@ -15,6 +14,7 @@ import com.ecommerce.dto.ProductGetResponseDTO;
 import com.ecommerce.dto.ReviewGetResponseDTO;
 import com.ecommerce.dto.ReviewRequestDTO;
 import com.ecommerce.dto.ReviewUpdateRequestDTO;
+import com.ecommerce.middleware.JwtAspect;
 import com.ecommerce.model.Cart;
 import com.ecommerce.model.Orders;
 import com.ecommerce.model.Product;
@@ -57,7 +57,8 @@ public class UserImpl {
     }
 
 	public Cart getCart() {
-        return cartService.getCart();
+        String cartId = JwtAspect.getCurrentUserId();
+        return cartService.getCart(cartId);
 	}
 
 	public String addProductToCart(CartItemAddRequestDTO cartItemAddRequestDTO) {
@@ -72,9 +73,12 @@ public class UserImpl {
         return cartService.deleteCartItem(productId);
     }
 
-    public OrderAddResponseDTO placeOrder() {
-        return orderService.placeOrder();
+    public Map<String, Object> checkout() {
+        return orderService.checkout();
     }
+	public OrderAddResponseDTO placeOrder(String payload, String razorpaySignature) {
+		return orderService.placeOrder(payload,razorpaySignature);
+	}
 	public OrderGetResponseDTO getAllOrders() {
         return orderService.getAllOrders();
 	}

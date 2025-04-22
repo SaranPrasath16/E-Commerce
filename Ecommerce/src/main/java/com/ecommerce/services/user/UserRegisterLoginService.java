@@ -1,8 +1,10 @@
 package com.ecommerce.services.user;
 
 import java.time.LocalDateTime;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 import com.ecommerce.dto.LoginRequestDTO;
 import com.ecommerce.dto.LoginResponseDTO;
 import com.ecommerce.dto.OtpRequestDTO;
@@ -14,6 +16,7 @@ import com.ecommerce.exceptionhandler.UnauthorizedException;
 import com.ecommerce.model.User;
 import com.ecommerce.repo.UserRepo;
 import com.ecommerce.services.cart.CartService;
+import com.ecommerce.services.email.EmailService;
 import com.ecommerce.services.otp.OtpService;
 import com.ecommerce.util.EmailValidator;
 import com.ecommerce.util.JwtUtil;
@@ -26,10 +29,11 @@ public class UserRegisterLoginService {
     private final UserRepo userRepo;
     private final JwtUtil jwtUtil;
     private final CartService cartService;
-
+    private final EmailService emailService;
 
 	public UserRegisterLoginService(PasswordEncoder passwordEncoder, EmailValidator emailValidator,
-			OtpService otpService, UserRepo userRepo, JwtUtil jwtUtil, CartService cartService) {
+			OtpService otpService, UserRepo userRepo, JwtUtil jwtUtil, CartService cartService,
+			EmailService emailService) {
 		super();
 		this.passwordEncoder = passwordEncoder;
 		this.emailValidator = emailValidator;
@@ -37,6 +41,7 @@ public class UserRegisterLoginService {
 		this.userRepo = userRepo;
 		this.jwtUtil = jwtUtil;
 		this.cartService = cartService;
+		this.emailService = emailService;
 	}
 
 	public String registerUser(User userRegisterRequest){
@@ -53,7 +58,7 @@ public class UserRegisterLoginService {
                 LocalDateTime.now());
         
         int otp = otpService.generateOtp(email, tempUser);
-        otpService.sendOtpByEmail(email, otp,userRegisterRequest.getUserName());
+        emailService.sendOtpByEmail(email, otp,userRegisterRequest.getUserName());
 
         return "OTP sent to email. Please verify to complete registration.";
     }
@@ -76,10 +81,11 @@ public class UserRegisterLoginService {
 
         else {
             User user = new User(tempUser.getUserName(),
-                    email, tempUser.getEncodedPassword(),tempUser.getMobile(),tempUser.getAddress(),false,false);
+                    email, tempUser.getEncodedPassword(),tempUser.getMobile(),tempUser.getAddress(),false,false,false);
             
             userRepo.save(user);
             cartService.addCartId(user.getUserId());
+            emailService.sendAccountCreatedEmail(email, tempUser.getUserName());
             return "User added Successfully";
         }
     }

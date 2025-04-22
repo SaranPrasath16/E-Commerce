@@ -31,7 +31,7 @@ public class AdminController {
     }
     
     @DeleteMapping("/user")
-    public ResponseEntity<String> deleteUser(@RequestParam("userId") String userId, HttpServletRequest request) {
+    public ResponseEntity<String> deleteUser(@RequestParam("user_Id") String userId, HttpServletRequest request) {
         return ResponseEntity.ok(adminImpl.deleteUser(userId));
     }
 

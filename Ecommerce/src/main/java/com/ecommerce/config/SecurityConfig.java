@@ -35,7 +35,7 @@ public class SecurityConfig {
 	        .cors(cors -> cors.disable()) 
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) 
             .authorizeHttpRequests(authorize -> authorize
-            .requestMatchers("/user/login", "/user/register", "/user/otp", "/homepage").permitAll()
+            .requestMatchers("/user/login", "/user/register", "/user/otp", "/homepage","/payment/order").permitAll()
             .requestMatchers("/home","/admin/superadmin/**","/admin/superadmin/").hasAuthority("ROLE_SUPER_ADMIN")
             .requestMatchers("/user/**", "/user/").hasAuthority("ROLE_USER")
             .requestMatchers("/admin/productadmin/**","/admin/productadmin/").hasAnyAuthority("ROLE_PRODUCT_ADMIN","ROLE_SUPER_ADMIN")

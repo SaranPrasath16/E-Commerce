@@ -1,11 +1,11 @@
 package com.ecommerce.model;
 
 import java.util.List;
-import java.util.UUID;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.ecommerce.util.IdGenerator;
 
 @Document(collection="product")
 @TypeAlias("Product")
@@ -63,7 +63,7 @@ public class Product {
 	public Product() {
 		super();
         if (this.productId == null || this.productId.isEmpty()) {
-            this.productId = UUID.randomUUID().toString();
+            this.productId = "PRODUCT_" + IdGenerator.generateRandomNumber();
         }
 	}
 	public Product(String category, String productName, String productDescription, double productPrice,

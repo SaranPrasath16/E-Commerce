@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
+
 import com.ecommerce.dto.CartItemAddRequestDTO;
 import com.ecommerce.dto.CartItemUpdateRequestDTO;
 import com.ecommerce.exceptionhandler.EntityCreationException;
@@ -19,7 +21,9 @@ import com.ecommerce.exceptionhandler.ResourceNotFoundException;
 import com.ecommerce.middleware.JwtAspect;
 import com.ecommerce.model.Cart;
 import com.ecommerce.model.CartItems;
+import com.ecommerce.model.Product;
 import com.ecommerce.repo.CartRepo;
+import com.ecommerce.repo.ProductRepo;
 import com.mongodb.client.result.UpdateResult;
 
 @Service
@@ -28,15 +32,18 @@ public class CartService {
     private final CartRepo cartRepo;
     private final CartItemService cartItemService;
     private final MongoTemplate mongoTemplate;
+    private final ProductRepo productRepo;
 
-    public CartService(CartRepo cartRepo, CartItemService cartItemService, MongoTemplate mongoTemplate) {
-        this.cartRepo = cartRepo;
-        this.cartItemService = cartItemService;
-        this.mongoTemplate = mongoTemplate;
-    }
+	public CartService(CartRepo cartRepo, CartItemService cartItemService, MongoTemplate mongoTemplate,
+			ProductRepo productRepo) {
+		super();
+		this.cartRepo = cartRepo;
+		this.cartItemService = cartItemService;
+		this.mongoTemplate = mongoTemplate;
+		this.productRepo = productRepo;
+	}
 
-	public Cart getCart() {
-        String cartId = JwtAspect.getCurrentUserId();
+	public Cart getCart(String cartId) {
         if (cartId.isEmpty() || cartId ==null) {
             throw new ResourceNotFoundException("User ID not found in JWT token.");
         }
@@ -65,11 +72,12 @@ public class CartService {
         if (cartId.isEmpty() || cartId ==null) {
             throw new ResourceNotFoundException("User ID not found in JWT token.");
         }
-
+        
         String productId = cartItemAddRequestDTO.getProductId();
+        Product product=productRepo.findProductById(productId);
         int quantity = cartItemAddRequestDTO.getQuantity();
-        double price = cartItemAddRequestDTO.getPrice();
-        String name = cartItemAddRequestDTO.getName();
+        double price = product.getProductPrice();
+        String name = product.getProductName();
         
         CartItems cartItemsModel = cartItemExistsOrNot(cartId, productId);
         if(cartItemsModel != null) {
@@ -141,7 +149,8 @@ public class CartService {
         }
 
         String productId = cartItemUpdateRequestDTO.getProductId();
-        double price = cartItemUpdateRequestDTO.getPrice();
+        Product product=productRepo.findProductById(productId);
+        double price = product.getProductPrice();
         boolean selection = cartItemUpdateRequestDTO.isSelectedForPayment();
         int quantity = cartItemUpdateRequestDTO.getQuantity();
 
@@ -173,6 +182,7 @@ public class CartService {
         }
 
         CartItems cartItem = cartItemExistsOrNot(cartId, productId);
+        System.out.println(cartItem);
         if(cartItem != null) {
             Query query = new Query(Criteria.where("_id").is(cartId));
 

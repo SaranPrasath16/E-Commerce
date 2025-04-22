@@ -46,12 +46,12 @@ public class ProductController {
     @PostMapping(value = "/product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @AuthRequired
     public ResponseEntity<String> addProduct(
-            @RequestParam("category") String category,
-            @RequestParam("productName") String productName,
-            @RequestParam("productDescription") String productDescription,
-            @RequestParam("productPrice") double productPrice,
-            @RequestParam("noOfStocks") int noOfStocks,
-            @RequestParam("images") MultipartFile[] images,
+            @RequestParam("product_Category") String category,
+            @RequestParam("product_Name") String productName,
+            @RequestParam("product_Description") String productDescription,
+            @RequestParam("product_Price") double productPrice,
+            @RequestParam("no_Of_Stocks") int noOfStocks,
+            @RequestParam("product_Images") MultipartFile[] images,
             HttpServletRequest request) {
 
         ProductRequestDTO productRequestDTO = new ProductRequestDTO();
@@ -68,14 +68,14 @@ public class ProductController {
     @PutMapping(value = "/product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @AuthRequired
     public ResponseEntity<String> updateProductById(
-            @RequestParam("productId") String productId,
-            @RequestParam("productNewName") String productNewName,
-            @RequestParam("productNewCategory") String productNewCategory,
-            @RequestParam("productNewDescription") String productNewDescription,
-            @RequestParam("productNewPrice") double productNewPrice,
-            @RequestParam("productNewStock") int productNewStock,
-            @RequestParam("imagesToDelete") List<String> imagesToDelete,
-            @RequestParam(value = "images", required = false) MultipartFile[] images,
+            @RequestParam("product_Id") String productId,
+            @RequestParam("product_New_Name") String productNewName,
+            @RequestParam("product_New_Category") String productNewCategory,
+            @RequestParam("product_New_Description") String productNewDescription,
+            @RequestParam("product_New_Price") double productNewPrice,
+            @RequestParam("product_New_Stock") int productNewStock,
+            @RequestParam("images_To_Delete") List<String> imagesToDelete,
+            @RequestParam(value = "product_Images", required = false) MultipartFile[] images,
             HttpServletRequest request) {
 
         ProductUpdateRequestDTO productUpdateRequestDTO = new ProductUpdateRequestDTO();
@@ -95,13 +95,13 @@ public class ProductController {
 
     @DeleteMapping("/product")
     @AuthRequired
-    public ResponseEntity<String> deleteByName(@RequestParam("productId") String productId){
+    public ResponseEntity<String> deleteByName(@RequestParam("product_Id") String productId){
         ProductDeleteResponseDTO productDeleteResponseDTO = productAdminImpl.deleteProductByName(productId);
         return ResponseEntity.ok(productDeleteResponseDTO.getProductMsg()+" and the Product Id: "+productDeleteResponseDTO.getId());
     }
     
     @GetMapping("/product/review")
-    public ResponseEntity<List<ReviewGetResponseDTO>> getProductReviews(@RequestParam("productId") String productId){
+    public ResponseEntity<List<ReviewGetResponseDTO>> getProductReviews(@RequestParam("product_Id") String productId){
         List<ReviewGetResponseDTO> reviewList = userImpl.getProductReviews(productId);
         return ResponseEntity.ok(reviewList);
     }

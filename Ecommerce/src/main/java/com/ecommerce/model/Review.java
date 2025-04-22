@@ -1,10 +1,11 @@
 package com.ecommerce.model;
 
 import java.util.List;
-import java.util.UUID;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.ecommerce.util.IdGenerator;
 
 @Document(collection = "reviews")
 @TypeAlias("Review")
@@ -56,7 +57,7 @@ public class Review {
 	public Review() {
 		super();
         if (this.reviewId == null || this.reviewId.isEmpty()) {
-            this.reviewId = UUID.randomUUID().toString();
+            this.reviewId = "REVIEW_" + IdGenerator.generateRandomNumber();
         }
 	}
 	public Review(String userId, String productId, double rating, String comment, List<String> userImageUrls) {

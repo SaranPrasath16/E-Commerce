@@ -1,8 +1,12 @@
 package com.ecommerce.services.order;
 
-import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import com.ecommerce.dto.OrderAddResponseDTO;
@@ -10,13 +14,22 @@ import com.ecommerce.dto.OrderGetResponseDTO;
 import com.ecommerce.exceptionhandler.EntityDeletionException;
 import com.ecommerce.exceptionhandler.InvalidInputException;
 import com.ecommerce.exceptionhandler.ResourceNotFoundException;
+import com.ecommerce.exceptionhandler.UnauthorizedException;
 import com.ecommerce.middleware.JwtAspect;
-import com.ecommerce.model.CartItems;
 import com.ecommerce.model.Cart;
+import com.ecommerce.model.CartItems;
 import com.ecommerce.model.Orders;
+import com.ecommerce.model.Payment;
+import com.ecommerce.model.User;
 import com.ecommerce.repo.OrderRepo;
+import com.ecommerce.repo.PaymentRepo;
+import com.ecommerce.repo.UserRepo;
 import com.ecommerce.services.cart.CartService;
+import com.ecommerce.services.email.EmailService;
 import com.ecommerce.services.product.ProductService;
+import com.ecommerce.services.razorpay.RazorpayService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class OrderService {
@@ -24,54 +37,87 @@ public class OrderService {
 	private final CartService cartService;
 	private final ProductService productService;
 	private final OrderRepo orderRepo;
+	private final PaymentRepo paymentRepo;
+	private final RazorpayService razorpayService;
+	private final UserRepo userRepo;
+	private final EmailService emailService;
+	private String paymentId;
 	
-	public OrderService(CartService cartService, ProductService productService, OrderRepo orderRepo) {
+
+	public OrderService(CartService cartService, ProductService productService, OrderRepo orderRepo,
+			PaymentRepo paymentRepo, RazorpayService razorpayService, UserRepo userRepo, EmailService emailService) {
 		super();
 		this.cartService = cartService;
 		this.productService = productService;
 		this.orderRepo = orderRepo;
+		this.paymentRepo = paymentRepo;
+		this.razorpayService = razorpayService;
+		this.userRepo = userRepo;
+		this.emailService = emailService;
 	}
 
-	public OrderAddResponseDTO placeOrder() {
+	public Map<String, Object> checkout() {
 
-        String cartId = JwtAspect.getCurrentUserId();
-        if (cartId == null || cartId.isEmpty()) {
-            throw new ResourceNotFoundException("User ID not found in JWT token.");
-        }
-        Cart cart=cartService.getCart();
-        List<CartItems> cartItems = cartService.getCartItems(cartId);
-        if (cartItems.isEmpty()) {
-            throw new ResourceNotFoundException("No items found in cart");
-        }
+	    String cartId = JwtAspect.getCurrentUserId();
+	    if (cartId == null || cartId.isEmpty()) {
+	        throw new ResourceNotFoundException("User ID not found in JWT token.");
+	    }
 
-        List<String> successful = new ArrayList<>();
-        List<String> failed = new ArrayList<>();
-        List<String> outOfStock = new ArrayList<>();
-        LocalDateTime orderDateTime = LocalDateTime.now();
+	    User user = userRepo.findUserById(cartId);
+	    List<CartItems> cartItems = cartService.getCartItems(cartId);
+	    if (cartItems.isEmpty()) {
+	        throw new ResourceNotFoundException("No items found in cart");
+	    }
+	    List<String> outOfStock = new ArrayList<>();
+	    List<CartItems> outOfStockItems = new ArrayList<>();
+	    ZonedDateTime nowInIST = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+	    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+	    String paymentDateTime = nowInIST.format(formatter);
 
-        for (CartItems item : cartItems) {
-            if (item.getQuantity() > productService.getAvailableStock(item.getProductId())) {
-                outOfStock.add(item.getName());
-                continue;
-            }
-            //String productId = item.getProductId().getProductId();
-            Orders order = new Orders(cartId, cartItems,cart.getTotalAmount(),cart.getCartItems().size(), orderDateTime, "pending");
-            Optional<Orders> savedOrder = Optional.ofNullable(orderRepo.save(order));
-            if (savedOrder.isPresent()) {
-                productService.updateProductStock(item.getProductId(), item.getQuantity());
-                successful.add(order.getOrderId());
-            } else {
-                failed.add(item.getName());
-            }
-        }
+	    double finalAmount = 0.0;
+	    List<CartItems> itemsToProcess = new ArrayList<>();
+	    for (CartItems item : cartItems) {
+	        int availableStock = productService.getAvailableStock(item.getProductId());
+	        if (item.getQuantity() > availableStock) {
+	            outOfStock.add(item.getName());
+	            outOfStockItems.add(item);
+	        } else {
+	            finalAmount += item.getPrice();
+	            itemsToProcess.add(item);
+	        }
+	    }
+	    if (itemsToProcess.isEmpty()) {
+	        throw new ResourceNotFoundException("All items are out of stock. No payment link generated.");
+	    }
+	    try {
+	        Map<String, String> paymentLinkData = razorpayService.createPaymentLink(finalAmount, user.getUserName(), user.getEmail());
+	        String paymentLinkUrl = paymentLinkData.get("short_url");
 
-        OrderAddResponseDTO response = new OrderAddResponseDTO();
-        response.setSuccessfulOrders(successful);
-        response.setOutOfStockItems(outOfStock);
-        response.setFailedOrders(failed);
-        cartService.deleteSelectedCartItems(cartId, cartItems);
-        return response;
-    }
+	        Payment payment = new Payment(
+	                cartId,
+	                paymentLinkData.get("payment_link_id"),
+	                null,
+	                null,
+	                "INITIATED",
+	                paymentDateTime
+	        );
+	        paymentId=payment.getPaymentId();
+	        paymentRepo.save(payment);
+	        for (CartItems item : itemsToProcess) {
+	            productService.updateProductStock(item.getProductId(), item.getQuantity());
+	        }
+	        emailService.sendPaymentLink(user.getEmail(), user.getUserName(), paymentLinkUrl);
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        throw new RuntimeException("Payment link generation failed.");
+	    }
+	    cartService.deleteSelectedCartItems(cartId, outOfStockItems);
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("outOfStockItems", outOfStock);
+	    response.put("message", "Payment link sent to your registered email. Complete the payment to confirm the order.");
+
+	    return response;
+	}
 
 	public OrderGetResponseDTO getAllOrders() {
         String userId = JwtAspect.getCurrentUserId();
@@ -84,11 +130,14 @@ public class OrderService {
 	}
 
 	public Orders getSpecificOrder(String orderId) {
-        Optional<Orders> optionalOrder = orderRepo.findById(orderId);
-        if(optionalOrder.isPresent()){
-            return optionalOrder.get();
+        Optional<Orders> order = orderRepo.findById(orderId);
+        if (JwtAspect.getCurrentUserId().equals(order.get().getUserId())) {
+	        if(order.isPresent()){
+	            return order.get();
+	        }
+	        throw new ResourceNotFoundException("Failed to fetch order with specified credentials.");
         }
-        throw new ResourceNotFoundException("Failed to fetch order with specified credentials.");
+        throw new UnauthorizedException("You are not authorized to view this order.");
 	}
 
 	public String deleteOrder(String orderId) {
@@ -96,16 +145,103 @@ public class OrderService {
         if(order.isEmpty()){
             throw new ResourceNotFoundException("Failed to fetch order with provided credentials.");
         }
-
-        if(order.get().getStatus().equals("pending")){
-            long i = orderRepo.deleteByOrderId(orderId);
-            if(i > 0){
-                return "Order deleted successfully.";
+        if (JwtAspect.getCurrentUserId().equals(order.get().getUserId())) {
+            if (order.get().getOrderStatus().equals("PENDING")) {
+                long i = orderRepo.deleteByOrderId(orderId);
+                if (i > 0) {
+                    return "Order deleted successfully.";
+                }
+                throw new EntityDeletionException("Failed to delete the order.");
             }
-            throw new EntityDeletionException("Failed to delete the order.");
+            throw new InvalidInputException("Invalid order status provided.");
         }
-        throw new InvalidInputException("Invalid order status provided.");
+        throw new UnauthorizedException("You are not authorized to delete this order.");
 	}
+	
+	public OrderAddResponseDTO placeOrder(String payloadBody, String razorpaySignature) {
+	    boolean isSignatureValid = razorpayService.verifyRazorpayWebhookSignature(payloadBody, razorpaySignature);
+	    if (!isSignatureValid) {
+	        throw new SecurityException("Invalid Razorpay signature. Possible tampering detected.");
+	    }
+	    Map<String, Object> payload = convertJsonToMap(payloadBody);
+	    String event = (String) payload.get("event");
+	    if ("payment_link.paid".equals(event)) {
+	        System.out.println("Ignoring payment_link.paid event");
+	        throw new UnauthorizedException("Ignoring payment_link.paid event");
+	    }
+	    Map<String, Object> payloadMap = (Map<String, Object>) payload.get("payload");
+	    Map<String, Object> paymentWrapper = (Map<String, Object>) payloadMap.get("payment");
+	    Map<String, Object> paymentEntity = (paymentWrapper != null) ? (Map<String, Object>) paymentWrapper.get("entity") : null;
+
+	    if (paymentEntity == null) {
+	        throw new IllegalStateException("Payment entity is missing");
+	    }
+
+	    String paymentStatus = (String) paymentEntity.get("status");
+	    String razorOrderId = (String) paymentEntity.get("order_id");
+	    String razorPaymentId = (String) paymentEntity.get("id");
+
+	    if (paymentId == null || paymentId.isEmpty()) {
+	        throw new ResourceNotFoundException("Payment Id is not found");
+	    }
+	    Payment payment = paymentRepo.findByPaymentId(paymentId);
+	    if (payment == null) {
+	        throw new ResourceNotFoundException("No payment found with Payment ID: " + paymentId);
+	    }
+	    payment.setRazorOrderId(razorOrderId);
+	    payment.setRazorPaymentId(razorPaymentId);
+	    payment.setPaymentStatus(paymentStatus);
+	    paymentRepo.save(payment);
+	    
+	    if ("failed".equalsIgnoreCase(paymentStatus)) {
+	        throw new UnauthorizedException("Ignoring webhook because payment is not captured yet. Status: " + paymentStatus);
+	    }
+
+	    String userId = payment.getUserId();
+	    Cart cart = cartService.getCart(userId);
+	    List<CartItems> cartItems = cartService.getCartItems(userId);
+
+	    if (cartItems.isEmpty()) {
+	        throw new ResourceNotFoundException("No items found in cart for user: " + userId);
+	    }
+
+	    List<String> successful = new ArrayList<>();
+	    List<String> failed = new ArrayList<>();
+	    ZonedDateTime nowInIST = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+	    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+	    String orderDateTime = nowInIST.format(formatter);
+
+	    for (CartItems item : cartItems) {
+	        try {
+	            Orders order = new Orders(userId,cartItems,cart.getTotalAmount(),cart.getCartItems().size(),payment.getPaymentId(),"PAID","ORDER_CONFIRMED",orderDateTime);
+
+	            Orders savedOrder = orderRepo.save(order);
+	            productService.updateProductStock(item.getProductId(), item.getQuantity());
+	            successful.add(savedOrder.getOrderId());
+
+	        } catch (Exception e) {
+	            failed.add(item.getName());
+	            e.printStackTrace();
+	        }
+	    }
+
+	    cartService.deleteSelectedCartItems(userId, cartItems);
+	    OrderAddResponseDTO response = new OrderAddResponseDTO();
+	    response.setSuccessfulOrders(successful);
+	    response.setFailedOrders(failed);
+	    return response;
+	}
+
+	private Map<String, Object> convertJsonToMap(String jsonString) {
+	    ObjectMapper objectMapper = new ObjectMapper();
+	    try {
+	        return objectMapper.readValue(jsonString, new TypeReference<Map<String, Object>>() {});
+	    } catch (Exception e) {
+	        throw new RuntimeException("Failed to parse JSON payload", e);
+	    }
+	}
+
+
 }
 
 

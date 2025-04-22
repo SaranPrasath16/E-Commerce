@@ -1,13 +1,12 @@
 package com.ecommerce.controller;
 
 import java.util.List;
-
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import com.ecommerce.dto.CartItemAddRequestDTO;
 import com.ecommerce.dto.CartItemUpdateRequestDTO;
-import com.ecommerce.dto.OrderAddResponseDTO;
 import com.ecommerce.dto.OrderGetResponseDTO;
 import com.ecommerce.dto.ProductDescriptionListResponseDTO;
 import com.ecommerce.dto.ProductGetResponseDTO;
@@ -28,7 +26,6 @@ import com.ecommerce.middleware.AuthRequired;
 import com.ecommerce.model.Cart;
 import com.ecommerce.model.Orders;
 import com.ecommerce.services.user.UserImpl;
-
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
@@ -67,30 +64,31 @@ public class UserController {
         String msg = userImpl.updateCartItem(cartItemUpdateRequestDTO);
         return ResponseEntity.ok(msg);
     }
-    @DeleteMapping("/cart/{productId}")
+    @DeleteMapping("/cart")
     @AuthRequired
-    public ResponseEntity<String> deleteCartItem(@PathVariable("productId") String productId){
+    public ResponseEntity<String> deleteCartItem(@RequestParam("product_Id") String productId){
         String msg = userImpl.deleteCartItem(productId);
         return ResponseEntity.ok(msg);
     }
     
-    @PostMapping("/order")
+    @PostMapping("/checkout")
     @AuthRequired
-    public ResponseEntity<OrderAddResponseDTO> placeOrder(){
-        OrderAddResponseDTO orderResponse = userImpl.placeOrder();
-
+    public ResponseEntity<Map<String, Object>> checkout() {
+        Map<String, Object> checkoutResponse = userImpl.checkout();
+		@SuppressWarnings("unchecked")
+		List<String> outOfStockItems = (List<String>) checkoutResponse.get("outOfStockItems");
+        String message = (String) checkoutResponse.get("message");
         HttpStatus status;
-        if (!orderResponse.getSuccessfulOrders().isEmpty() && orderResponse.getOutOfStockItems().isEmpty() && orderResponse.getFailedOrders().isEmpty()) {
+        if (outOfStockItems.isEmpty()) {
             status = HttpStatus.OK;
-        } else if (!orderResponse.getSuccessfulOrders().isEmpty()) {
+        } 
+        else {
             status = HttpStatus.PARTIAL_CONTENT;
-        } else {
-            status = HttpStatus.BAD_REQUEST;
         }
-
-        return ResponseEntity.status(status).body(orderResponse);
+        checkoutResponse.put("message", message);
+        return ResponseEntity.status(status).body(checkoutResponse);
     }
-    
+        
     @GetMapping("/orders")
     @AuthRequired
     public ResponseEntity<OrderGetResponseDTO> getAllOrders(){
@@ -98,28 +96,28 @@ public class UserController {
         return ResponseEntity.ok(orderGetResponseDTO);
     }
     
-    @GetMapping("/order/{orderId}")
+    @GetMapping("/order")
     @AuthRequired
-    public ResponseEntity<Orders> getOrder(@PathVariable("orderId") String orderId){
+    public ResponseEntity<Orders> getOrder(@RequestParam("order_Id") String orderId){
     	Orders order = userImpl.getSpecificOrder(orderId);
         return ResponseEntity.ok(order);
     }
     
-    @DeleteMapping("/order/{orderId}")
+    @DeleteMapping("/order")
     @AuthRequired
-    public ResponseEntity<String> deleteOrder(@PathVariable("orderId") String orderId){
+    public ResponseEntity<String> deleteOrder(@RequestParam("order_Id") String orderId){
         String msg = userImpl.deleteOrder(orderId);
         return ResponseEntity.ok(msg);
     }
     
     @GetMapping("/filter")
-    public ResponseEntity<ProductDescriptionListResponseDTO> getProductByPriceRange(@RequestParam("minPrice") double minPrice, @RequestParam("maxPrice") double maxPrice){
+    public ResponseEntity<ProductDescriptionListResponseDTO> getProductByPriceRange(@RequestParam("min_Price") double minPrice, @RequestParam("max_Price") double maxPrice){
         ProductDescriptionListResponseDTO productDescriptionListResponseDTO = userImpl.getProductByPriceRange(minPrice, maxPrice);
         return ResponseEntity.ok(productDescriptionListResponseDTO);
     }
     
     @GetMapping("/product/review")
-    public ResponseEntity<List<ReviewGetResponseDTO>> getProductReviews(@RequestParam("productId") String productId){
+    public ResponseEntity<List<ReviewGetResponseDTO>> getProductReviews(@RequestParam("product_Id") String productId){
         List<ReviewGetResponseDTO> reviewList = userImpl.getProductReviews(productId);
         return ResponseEntity.ok(reviewList);
     }
@@ -127,10 +125,10 @@ public class UserController {
     @PostMapping(value = "/product/review", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @AuthRequired
     public ResponseEntity<String> addReview(
-            @RequestParam("productId") String productId,
-            @RequestParam("rating") double rating,
-            @RequestParam("comment") String comment,
-            @RequestParam(value = "userImageUrls", required = false) MultipartFile[] userImageUrls,
+            @RequestParam("product_Id") String productId,
+            @RequestParam("user_Rating") double rating,
+            @RequestParam("user_Comment") String comment,
+            @RequestParam(value = "user_Image_Urls", required = false) MultipartFile[] userImageUrls,
             HttpServletRequest request) {
 
         ReviewRequestDTO reviewRequestDTO = new ReviewRequestDTO();
@@ -146,11 +144,11 @@ public class UserController {
     @PutMapping(value = "/product/review", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @AuthRequired
     public ResponseEntity<String> updateReview(
-            @RequestParam("reviewId") String reviewId,
-            @RequestParam("rating") double rating,
-            @RequestParam("comment") String comment,
-            @RequestParam(value = "userImageToDelete", required = false) List<String> userImageToDelete,
-            @RequestParam(value = "userImageUrls", required = false) MultipartFile[] userImageUrls) {
+            @RequestParam("review_Id") String reviewId,
+            @RequestParam("user_Rating") double rating,
+            @RequestParam("user_Comment") String comment,
+            @RequestParam(value = "user_Image_To_Delete", required = false) List<String> userImageToDelete,
+            @RequestParam(value = "user_Image_Urls", required = false) MultipartFile[] userImageUrls) {
 
         ReviewUpdateRequestDTO reviewUpdateRequestDTO = new ReviewUpdateRequestDTO();
         reviewUpdateRequestDTO.setReviewId(reviewId);
@@ -165,7 +163,7 @@ public class UserController {
     
     @DeleteMapping("/product/review")
     @AuthRequired
-    public ResponseEntity<String> deleteReview(@RequestParam("reviewId") String reviewId){
+    public ResponseEntity<String> deleteReview(@RequestParam("review_Id") String reviewId){
         String msg = userImpl.deleteProductReviews(reviewId);
         return ResponseEntity.ok(msg);
     }

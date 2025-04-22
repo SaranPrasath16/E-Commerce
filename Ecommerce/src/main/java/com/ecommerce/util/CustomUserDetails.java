@@ -24,6 +24,9 @@ public class CustomUserDetails implements UserDetails {
         else if (user.isProductAdmin()) {
             role = "ROLE_PRODUCT_ADMIN";
         } 
+        else if(user.isOrdersAdmin()) {
+        	role="ROLE_ORDERS_ADMIN";
+        }
         else {
             role = "ROLE_USER";
         }
