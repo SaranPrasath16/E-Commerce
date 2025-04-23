@@ -1,9 +1,16 @@
 package com.ecommerce.services.email;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+
+import com.ecommerce.model.CartItems;
+import com.ecommerce.model.Orders;
+import com.ecommerce.model.Product;
+import com.ecommerce.model.User;
 
 @Service
 public class EmailService {
@@ -72,6 +79,113 @@ public class EmailService {
         message.setText(emailBody);
         mailSender.send(message);
     }
+
+    public void intimateSuperAdmins(List<String> adminEmails,User user) {
+        if (adminEmails == null || adminEmails.isEmpty()) {
+            return;
+        }
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(adminEmails.toArray(new String[0]));
+        message.setFrom("QuickPikk <quickpikk1@gmail.com>");
+        message.setSubject("🚀 New User Registered on QuickPikk!");
+
+        String emailBody = "Hello Superadmin,\n\n"
+                + "A new user has successfully registered on QuickPikk. 🎉\n\n"
+                + "👤 User Details:\n"
+                + "- UserId: " + user.getUserId() + "\n"
+                + "- UserName: " + user.getUserName() + "\n"
+                + "- Email: " + user.getEmail() + "\n"
+                + "- Mobile Number: " + user.getMobile() + "\n\n"
+                + "Please review the user if necessary.\n\n"
+                + "Thank you for managing the platform! 🙌\n\n"
+                + "Best regards,\n"
+                + "QuickPikk Team";
+
+        message.setText(emailBody);
+        mailSender.send(message);
+    }
+    
+    public void intimateOrderAdmins(List<String> orderAdminEmails, Orders order) {
+        if (orderAdminEmails == null || orderAdminEmails.isEmpty() || order == null) {
+            return;
+        }
+
+        String orderId = order.getOrderId();
+        String paymentStatus = order.getPaymentStatus();
+        List<CartItems> orderItems = order.getCartItems();
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(orderAdminEmails.toArray(new String[0]));
+        message.setFrom("QuickPikk <quickpikk1@gmail.com>");
+        message.setSubject("🚨 New Order Update on QuickPikk!");
+
+        StringBuilder orderItemsDetails = new StringBuilder();
+        for (CartItems item : orderItems) {
+            orderItemsDetails.append("- Product: ").append(item.getName())
+                             .append("\n\n  Quantity: ").append(item.getQuantity())
+                             .append("\n\n");
+        }
+
+        String emailBody = "Hello Order Admin,\n\n"
+                + "An order update has been received on QuickPikk. 🚀\n\n"
+                + "🛒 Order Details:\n"
+                + "- OrderId: " + orderId + "\n\n"
+                + "- Payment Status: " + paymentStatus + "\n\n"
+                + "- Ordered Items:\n"
+                + orderItemsDetails.toString() + "\n\n"
+                + "Please review the order for further actions.\n\n"
+                + "Thank you for managing the orders! 🙌\n\n"
+                + "Best regards,\n"
+                + "QuickPikk Team";
+
+        message.setText(emailBody);
+        mailSender.send(message);
+    }
+    
+    public void intimateProductAdminsOnAddingProduct(List<String> productAdminEmails, Product product) {
+        if (productAdminEmails == null || productAdminEmails.isEmpty() || product == null) {
+            return;
+        }
+        String category = product.getCategory();
+        String productId=product.getProductId();
+        String productName = product.getProductName();
+        Double price = product.getProductPrice();
+        String description = product.getProductDescription();
+        List<String> images = product.getImageUrls();
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(productAdminEmails.toArray(new String[0]));
+        message.setFrom("QuickPikk <quickpikk1@gmail.com>");
+        message.setSubject("🛍️ New Product Added to QuickPikk!");
+
+        StringBuilder imagesList = new StringBuilder();
+        if (images != null && !images.isEmpty()) {
+            for (String imageUrl : images) {
+                imagesList.append("- ").append(imageUrl).append("\n");
+            }
+        } else {
+            imagesList.append("No images uploaded.");
+        }
+
+        String emailBody = "Hello Product Admin,\n\n"
+                + "A new product has been successfully added to QuickPikk! 🎉\n\n"
+                + "📦 Product Details:\n"
+                + "- Category: " + category + "\n\n"
+                + "- ProductId: " + productId + "\n\n"
+                + "- Name: " + productName + "\n\n"
+                + "- Price: ₹" + price + "\n\n"
+                + "- Description: " + description + "\n\n"
+                + "- Images:\n" + imagesList.toString() + "\n\n"
+                + "Kindly verify the listing and ensure everything looks perfect.\n\n"
+                + "Thank you for managing the products! 🙌\n\n"
+                + "Best regards,\n"
+                + "QuickPikk Team";
+
+        message.setText(emailBody);
+        mailSender.send(message);
+    }
+
+
 
 
 

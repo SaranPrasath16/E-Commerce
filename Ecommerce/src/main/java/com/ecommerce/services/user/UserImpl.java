@@ -3,17 +3,18 @@ package com.ecommerce.services.user;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 import com.ecommerce.dto.CartItemAddRequestDTO;
 import com.ecommerce.dto.CartItemUpdateRequestDTO;
 import com.ecommerce.dto.OrderAddResponseDTO;
 import com.ecommerce.dto.OrderGetResponseDTO;
-import com.ecommerce.dto.ProductDescriptionListResponseDTO;
 import com.ecommerce.dto.ProductGetResponseDTO;
-import com.ecommerce.dto.ReviewGetResponseDTO;
 import com.ecommerce.dto.ReviewRequestDTO;
 import com.ecommerce.dto.ReviewUpdateRequestDTO;
+import com.ecommerce.exceptionhandler.InvalidInputException;
 import com.ecommerce.middleware.JwtAspect;
 import com.ecommerce.model.Cart;
 import com.ecommerce.model.Orders;
@@ -48,8 +49,8 @@ public class UserImpl {
                         product.getProductName(),
                         product.getProductDescription(),
                         product.getProductPrice(),
-                        product.getNoOfStocks(),
-                        product.getImageUrls()
+                        product.getImageUrls(),
+                        reviewService.getProductReviews(product.getProductId())
                 ))
                 .collect(Collectors.toList());
 
@@ -88,10 +89,10 @@ public class UserImpl {
 	public String deleteOrder(String orderId) {
         return orderService.deleteOrder(orderId);
 	}
-	public ProductDescriptionListResponseDTO getProductByPriceRange(double minPrice, double maxPrice) {
+	public List<ProductGetResponseDTO> getProductByPriceRange(double minPrice, double maxPrice) {
         return productService.getProductByPriceRange(minPrice, maxPrice);
 	}
-	public List<ReviewGetResponseDTO> getProductReviews(String productId) {
+	public Object getProductReviews(String productId) {
         return reviewService.getProductReviews(productId);
     }
 
@@ -114,5 +115,26 @@ public class UserImpl {
 	public List<ProductGetResponseDTO> getProductByCategory(String category) {
         return productService.getProductByCategory(category);
 	}
+
+	public List<ProductGetResponseDTO> getProductByNameAndCategory(String name, String category) {
+        if(name.equals("null") && category.equals("null")){
+            throw new InvalidInputException("No input given");
+        }else if(name.equals("null")){
+            return getProductByCategory(category);
+        } else if (category.equals("null")) {
+            return getProductByName(name);
+        }else {
+            return productService.getProductByNameAndCategory(name, category);
+        }
+	}
+
+	public List<ProductGetResponseDTO> getProductByPriceHighToLow(List<ProductGetResponseDTO> productList) {
+		return productService.getProductByPriceHighToLow(productList);
+	}
+
+	public List<ProductGetResponseDTO> getProductByPriceLowToHigh(List<ProductGetResponseDTO> productList) {
+		return productService.getProductByPriceLowToHigh(productList);
+	}
+
 }
 

@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -114,9 +116,6 @@ public class OrderService {
 	        );
 	        paymentId=payment.getPaymentId();
 	        paymentRepo.save(payment);
-	        for (CartItems item : itemsToProcess) {
-	            productService.updateProductStock(item.getProductId(), item.getQuantity());
-	        }
 	        emailService.sendPaymentLink(user.getEmail(), user.getUserName(), paymentLinkUrl);
 	    } catch (Exception e) {
 	        e.printStackTrace();
@@ -221,14 +220,21 @@ public class OrderService {
 	    ZonedDateTime nowInIST = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
 	    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 	    String orderDateTime = nowInIST.format(formatter);
+	    int totalQuantity=0;
 
 	    for (CartItems item : cartItems) {
 	        try {
-	            Orders order = new Orders(userId,cartItems,cart.getTotalAmount(),cart.getCartItems().size(),payment.getPaymentId(),"PAID","ORDER_CONFIRMED",orderDateTime);
+	            Orders order = new Orders(userId,cartItems,cart.getTotalAmount(),totalQuantity+item.getQuantity(),payment.getPaymentId(),"PAID","ORDER_CONFIRMED",orderDateTime);
 
 	            Orders savedOrder = orderRepo.save(order);
 	            productService.updateProductStock(item.getProductId(), item.getQuantity());
 	            successful.add(savedOrder.getOrderId());
+	    	    cartService.deleteSelectedCartItems(userId, cartItems);
+	            List<User> ordersAdmins = userRepo.findOrdersAdmins();
+	            List<String> ordersAdminEmails = ordersAdmins.stream()
+	                                                       .map(User::getEmail)
+	                                                       .collect(Collectors.toList());
+	            emailService.intimateOrderAdmins(ordersAdminEmails, savedOrder);
 
 	        } catch (Exception e) {
 	            failed.add(item.getName());
@@ -236,7 +242,6 @@ public class OrderService {
 	        }
 	    }
 
-	    cartService.deleteSelectedCartItems(userId, cartItems);
 	    OrderAddResponseDTO response = new OrderAddResponseDTO();
 	    response.setSuccessfulOrders(successful);
 	    response.setFailedOrders(failed);

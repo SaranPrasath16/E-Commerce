@@ -2,6 +2,7 @@ package com.ecommerce.controller;
 
 import java.util.List;
 import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -14,18 +15,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
 import com.ecommerce.dto.CartItemAddRequestDTO;
 import com.ecommerce.dto.CartItemUpdateRequestDTO;
 import com.ecommerce.dto.OrderGetResponseDTO;
-import com.ecommerce.dto.ProductDescriptionListResponseDTO;
 import com.ecommerce.dto.ProductGetResponseDTO;
-import com.ecommerce.dto.ReviewGetResponseDTO;
 import com.ecommerce.dto.ReviewRequestDTO;
 import com.ecommerce.dto.ReviewUpdateRequestDTO;
 import com.ecommerce.middleware.AuthRequired;
 import com.ecommerce.model.Cart;
 import com.ecommerce.model.Orders;
 import com.ecommerce.services.user.UserImpl;
+
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
@@ -124,15 +125,38 @@ public class UserController {
         return ResponseEntity.ok(productGetResponseDTO);
     }
     
+    @GetMapping("/search/name-category")
+    @AuthRequired
+    public ResponseEntity<List<ProductGetResponseDTO>> getProductByNameAndCategory(@RequestParam("product_Name") String name, @RequestParam("product_Category") String category){
+    	List<ProductGetResponseDTO> productGetResponseDTO = userImpl.getProductByNameAndCategory(name, category);
+        return ResponseEntity.ok(productGetResponseDTO);
+    }
+    
+    @GetMapping("/sort/byprice/high-to-low")
+    @AuthRequired
+    public ResponseEntity<List<ProductGetResponseDTO>> getProductByPriceHighToLow(@RequestBody List<ProductGetResponseDTO> productList){
+    	List<ProductGetResponseDTO> productGetResponseDTO = userImpl.getProductByPriceHighToLow(productList);
+        return ResponseEntity.ok(productGetResponseDTO);
+    }
+
+    @GetMapping("/sort/byprice/low-to-high")
+    @AuthRequired
+    public ResponseEntity<List<ProductGetResponseDTO>> getProductByPriceLowToHigh(@RequestBody List<ProductGetResponseDTO> productList){
+    	List<ProductGetResponseDTO> productGetResponseDTO = userImpl.getProductByPriceLowToHigh(productList);
+        return ResponseEntity.ok(productGetResponseDTO);
+    }
+    
     @GetMapping("/filter/price")
-    public ResponseEntity<ProductDescriptionListResponseDTO> getProductByPriceRange(@RequestParam("min_Price") double minPrice, @RequestParam("max_Price") double maxPrice){
-        ProductDescriptionListResponseDTO productDescriptionListResponseDTO = userImpl.getProductByPriceRange(minPrice, maxPrice);
-        return ResponseEntity.ok(productDescriptionListResponseDTO);
+    @AuthRequired
+    public ResponseEntity<List<ProductGetResponseDTO>> getProductByPriceRange(@RequestParam("min_Price") double minPrice, @RequestParam("max_Price") double maxPrice){
+    	List<ProductGetResponseDTO> productGetResponseDTO = userImpl.getProductByPriceRange(minPrice, maxPrice);
+        return ResponseEntity.ok(productGetResponseDTO);
     }
     
     @GetMapping("/product/review")
-    public ResponseEntity<List<ReviewGetResponseDTO>> getProductReviews(@RequestParam("product_Id") String productId){
-        List<ReviewGetResponseDTO> reviewList = userImpl.getProductReviews(productId);
+    @AuthRequired
+    public ResponseEntity<Object> getProductReviews(@RequestParam("product_Id") String productId){
+    	Object reviewList = userImpl.getProductReviews(productId);
         return ResponseEntity.ok(reviewList);
     }
     

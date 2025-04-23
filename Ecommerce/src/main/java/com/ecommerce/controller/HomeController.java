@@ -8,16 +8,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.ecommerce.dto.LoginRequestDTO;
 import com.ecommerce.dto.LoginResponseDTO;
 import com.ecommerce.dto.OtpRequestDTO;
 import com.ecommerce.dto.ProductGetResponseDTO;
-import com.ecommerce.middleware.AuthRequired;
 import com.ecommerce.model.User;
 import com.ecommerce.services.user.UserImpl;
 import com.ecommerce.services.user.UserRegisterLoginService;
-
 import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
@@ -31,12 +28,6 @@ public class HomeController {
 		super();
 		this.userRegisterLoginService = userRegisterLoginService;
 		this.userImpl = userImpl;
-	}
-
-	@GetMapping("/home")
-	@AuthRequired
-	public ResponseEntity<String> home(){
-		return ResponseEntity.ok("Welcome to Ecommerce");
 	}
 	
 	@GetMapping("/homepage")

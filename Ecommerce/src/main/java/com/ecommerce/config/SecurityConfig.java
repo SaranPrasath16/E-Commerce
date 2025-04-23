@@ -13,9 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
 import com.ecommerce.util.JwtAuthenticationFilter;
-
 import io.jsonwebtoken.security.Keys;
 
 @Configuration
@@ -36,9 +34,10 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) 
             .authorizeHttpRequests(authorize -> authorize
             .requestMatchers("/user/login", "/user/register", "/user/otp", "/homepage","/payment/order").permitAll()
-            .requestMatchers("/home","/admin/superadmin/**","/admin/superadmin/").hasAuthority("ROLE_SUPER_ADMIN")
+            .requestMatchers("/admin/superadmin/**","/admin/superadmin/").hasAuthority("ROLE_SUPER_ADMIN")
             .requestMatchers("/user/**", "/user/").hasAuthority("ROLE_USER")
             .requestMatchers("/admin/productadmin/**","/admin/productadmin/").hasAnyAuthority("ROLE_PRODUCT_ADMIN","ROLE_SUPER_ADMIN")
+            .requestMatchers("/admin/ordersadmin/**","/admin/ordersadmin/").hasAnyAuthority("ROLE_ORDERS_ADMIN","ROLE_SUPER_ADMIN")
             .anyRequest().authenticated())
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

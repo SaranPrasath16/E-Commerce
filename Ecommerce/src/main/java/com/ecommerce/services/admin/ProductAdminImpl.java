@@ -2,15 +2,12 @@ package com.ecommerce.services.admin;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import com.ecommerce.dto.ProductDeleteResponseDTO;
 import com.ecommerce.dto.ProductGetResponseDTO;
 import com.ecommerce.dto.ProductRequestDTO;
 import com.ecommerce.dto.ProductUpdateRequestDTO;
-import com.ecommerce.dto.ReviewGetResponseDTO;
 import com.ecommerce.model.Product;
 import com.ecommerce.services.product.ProductService;
 import com.ecommerce.services.review.ReviewService;
@@ -43,8 +40,8 @@ public class ProductAdminImpl {
                         product.getProductName(),
                         product.getProductDescription(),
                         product.getProductPrice(),
-                        product.getNoOfStocks(),
-                        product.getImageUrls()
+                        product.getImageUrls(),
+                        reviewService.getProductReviews(product.getProductId())
                 ))
                 .collect(Collectors.toList());
 
@@ -55,7 +52,7 @@ public class ProductAdminImpl {
 	    return productService.deleteById(productId);
 	}
 
-	public List<ReviewGetResponseDTO> getProductReviews(String productId) {
+	public Object getProductReviews(String productId) {
 		return reviewService.getProductReviews(productId);
 	}
 

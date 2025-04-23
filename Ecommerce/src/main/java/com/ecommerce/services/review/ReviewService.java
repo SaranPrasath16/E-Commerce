@@ -48,31 +48,34 @@ public class ReviewService {
 		this.cloudinaryService = cloudinaryService;
 	}
 
-	public List<ReviewGetResponseDTO> getProductReviews(String productId) {
-        if (productId == null || productId.isEmpty()) {
-            throw new InvalidInputException("Product ID is empty.");
-        }
-        List<Review> reviewList=reviewRepo.findByProductId(productId);
-        System.out.println(reviewList);
-        if(!reviewList.isEmpty()){
-        	  return reviewList.stream().map(review -> {
-        	        User user = userRepo.findById(review.getUserId())
-        	                .orElseThrow(() -> new ResourceNotFoundException("User not found for ID: " + review.getUserId()));
+	public Object getProductReviews(String productId) {
+	    if (productId == null || productId.isEmpty()) {
+	        throw new InvalidInputException("Product ID is empty.");
+	    }
 
-        	        Product product = productRepo.findById(review.getProductId())
-        	                .orElseThrow(() -> new ResourceNotFoundException("Product not found for ID: " + review.getProductId()));
+	    List<Review> reviewList = reviewRepo.findByProductId(productId);
 
-        	        return new ReviewGetResponseDTO(
-        	                user.getUserName(),
-        	                product.getProductName(),
-        	                review.getRating(),
-        	                review.getComment(),
-        	                review.getUserImageUrls()
-        	        );
-        	    }).collect(Collectors.toList());
-        }
-        throw new ResourceNotFoundException("Reviews not found for the product.");
+	    if (reviewList.isEmpty()) {
+	        return "No one reviewed this product";
+	    }
+
+	    return reviewList.stream().map(review -> {
+	        User user = userRepo.findById(review.getUserId())
+	                .orElseThrow(() -> new ResourceNotFoundException("User not found for ID: " + review.getUserId()));
+
+	        Product product = productRepo.findById(review.getProductId())
+	                .orElseThrow(() -> new ResourceNotFoundException("Product not found for ID: " + review.getProductId()));
+
+	        return new ReviewGetResponseDTO(
+	                user.getUserName(),
+	                product.getProductName(),
+	                review.getRating(),
+	                review.getComment(),
+	                review.getUserImageUrls()
+	        );
+	    }).collect(Collectors.toList());
 	}
+
 	
 	public String addProductReviews(ReviewRequestDTO reviewRequestDTO, MultipartFile[] userImageUrls) {
 	    if (reviewRequestDTO.getProductId() == null || reviewRequestDTO.getProductId().isEmpty()) {

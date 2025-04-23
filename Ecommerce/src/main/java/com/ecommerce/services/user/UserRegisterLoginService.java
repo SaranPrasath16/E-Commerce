@@ -1,6 +1,8 @@
 package com.ecommerce.services.user;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -82,10 +84,15 @@ public class UserRegisterLoginService {
         else {
             User user = new User(tempUser.getUserName(),
                     email, tempUser.getEncodedPassword(),tempUser.getMobile(),tempUser.getAddress(),false,false,false);
-            
+           
             userRepo.save(user);
             cartService.addCartId(user.getUserId());
             emailService.sendAccountCreatedEmail(email, tempUser.getUserName());
+            List<User> superAdmins = userRepo.findSuperAdmins();
+            List<String> superAdminEmails = superAdmins.stream()
+                                                       .map(User::getEmail)
+                                                       .collect(Collectors.toList());
+            emailService.intimateSuperAdmins(superAdminEmails,user);
             return "User added Successfully";
         }
     }

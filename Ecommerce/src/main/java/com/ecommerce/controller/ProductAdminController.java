@@ -1,7 +1,6 @@
 package com.ecommerce.controller;
 
 import java.util.List;
-
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,7 +15,6 @@ import com.ecommerce.dto.ProductDeleteResponseDTO;
 import com.ecommerce.dto.ProductGetResponseDTO;
 import com.ecommerce.dto.ProductRequestDTO;
 import com.ecommerce.dto.ProductUpdateRequestDTO;
-import com.ecommerce.dto.ReviewGetResponseDTO;
 import com.ecommerce.middleware.AuthRequired;
 import com.ecommerce.services.admin.ProductAdminImpl;
 import jakarta.servlet.http.HttpServletRequest;
@@ -96,8 +94,8 @@ public class ProductAdminController {
     }
     
     @GetMapping("/product/review")
-    public ResponseEntity<List<ReviewGetResponseDTO>> getProductReviews(@RequestParam("product_Id") String productId){
-        List<ReviewGetResponseDTO> reviewList = productAdminImpl.getProductReviews(productId);
+    public ResponseEntity<Object> getProductReviews(@RequestParam("product_Id") String productId){
+    	Object reviewList = productAdminImpl.getProductReviews(productId);
         return ResponseEntity.ok(reviewList);
     }
     

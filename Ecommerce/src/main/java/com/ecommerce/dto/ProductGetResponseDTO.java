@@ -7,8 +7,15 @@ public class ProductGetResponseDTO {
     private String ProductName;
     private String productDescription;
     private double productPrice;
-    private int noOfStock;
     private List<String> imageUrls;
+    private Object reviews;
+    
+	public Object getReviews() {
+		return reviews;
+	}
+	public void setReviews(Object reviews) {
+		this.reviews = reviews;
+	}
 	public String getCategory() {
 		return category;
 	}
@@ -33,30 +40,25 @@ public class ProductGetResponseDTO {
 	public void setProductPrice(double productPrice) {
 		this.productPrice = productPrice;
 	}
-	public int getNoOfStock() {
-		return noOfStock;
-	}
-	public void setNoOfStock(int noOfStock) {
-		this.noOfStock = noOfStock;
-	}
 	public List<String> getImageUrls() {
 		return imageUrls;
 	}
 	public void setImageUrls(List<String> imageUrls) {
 		this.imageUrls = imageUrls;
 	}
+
+	public ProductGetResponseDTO() {
+		super();
+	}
 	public ProductGetResponseDTO(String category, String productName, String productDescription, double productPrice,
-			int noOfStock, List<String> imageUrls) {
+			List<String> imageUrls, Object reviews) {
 		super();
 		this.category = category;
 		ProductName = productName;
 		this.productDescription = productDescription;
 		this.productPrice = productPrice;
-		this.noOfStock = noOfStock;
 		this.imageUrls = imageUrls;
-	}
-	public ProductGetResponseDTO() {
-		super();
+		this.reviews = reviews;
 	}
 
 }
