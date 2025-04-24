@@ -16,8 +16,15 @@ public class Payment {
 	private String razorPaymentLinkId;
 	private String razorOrderId;
 	private String razorPaymentId;
+	private String invoiceId;
     private String paymentStatus;
 	private String orderDateTime;
+	public String getInvoiceId() {
+		return invoiceId;
+	}
+	public void setInvoiceId(String invoiceId) {
+		this.invoiceId = invoiceId;
+	}
 	public String getRazorPaymentLinkId() {
 		return razorPaymentLinkId;
 	}
@@ -61,12 +68,14 @@ public class Payment {
 		this.orderDateTime = orderDateTime;
 	}
 
-	public Payment(String userId, String razorPaymentLinkId, String razorOrderId, String razorPaymentId, String paymentStatus, String orderDateTime) {
+	public Payment(String userId, String razorPaymentLinkId, String razorOrderId, String razorPaymentId,
+			String invoiceId, String paymentStatus, String orderDateTime) {
 		this();
 		this.userId = userId;
 		this.razorPaymentLinkId = razorPaymentLinkId;
 		this.razorOrderId = razorOrderId;
 		this.razorPaymentId = razorPaymentId;
+		this.invoiceId = invoiceId;
 		this.paymentStatus = paymentStatus;
 		this.orderDateTime = orderDateTime;
 	}

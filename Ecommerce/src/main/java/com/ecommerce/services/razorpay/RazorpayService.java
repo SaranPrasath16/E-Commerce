@@ -2,10 +2,15 @@ package com.ecommerce.services.razorpay;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
+
+import com.razorpay.Invoice;
 import com.razorpay.RazorpayClient;
 
 @Service
@@ -22,34 +27,40 @@ public class RazorpayService {
 	}
 
 
-    public Map<String, String> createPaymentLink(double amountInRupees, String customerName, String customerEmail) throws Exception {
-        JSONObject paymentLinkRequest = new JSONObject();
-        paymentLinkRequest.put("amount", (int) (amountInRupees * 100));
-        paymentLinkRequest.put("currency", "INR");
-        paymentLinkRequest.put("description", "Confirming the Order of customer: " + customerName);
+    public Map<String, String> generateInvoice(String customerName, String customerEmail, double amountInRupees) throws Exception {
+        JSONObject invoiceRequest = new JSONObject();
+        invoiceRequest.put("type", "invoice");
+        invoiceRequest.put("description", "Invoice for order payment");
 
-        JSONObject customer = new JSONObject();
-        customer.put("name", customerName);
-        customer.put("email", customerEmail);
-        paymentLinkRequest.put("customer", customer);
+        JSONObject customerDetails = new JSONObject();
+        customerDetails.put("name", customerName);
+        customerDetails.put("email", customerEmail);
+        invoiceRequest.put("customer", customerDetails);
 
-        JSONObject notify = new JSONObject();
-        notify.put("email", true);
-        paymentLinkRequest.put("notify", notify);
-        //paymentLinkRequest.put("reference_id","will be updated soon");
+        JSONArray lineItems = new JSONArray();
+        JSONObject item = new JSONObject()
+            .put("name", "Order payment for: " + customerName)
+            .put("amount", (int)(amountInRupees * 100))
+            .put("currency", "INR")
+            .put("quantity", 1);
+        lineItems.put(item);
+
+        invoiceRequest.put("line_items", lineItems);
+        invoiceRequest.put("sms_notify", 1);
+        invoiceRequest.put("email_notify", 1);
+
         long currentTimestamp = System.currentTimeMillis() / 1000;
-        long expiryTimestamp = currentTimestamp + (20 * 60);
-        paymentLinkRequest.put("expire_by", expiryTimestamp);
-        com.razorpay.PaymentLink paymentLink = razorpayClient.paymentLink.create(paymentLinkRequest);
-        String paymentLinkId = paymentLink.get("id");
-        String shortUrl = paymentLink.get("short_url");
+        long expiryTimestamp = currentTimestamp + (24 * 60 * 60);
+        invoiceRequest.put("expire_by", expiryTimestamp);
+
+        Invoice invoice = razorpayClient.invoices.create(invoiceRequest);
 
         Map<String, String> response = new HashMap<>();
-        response.put("payment_link_id", paymentLinkId);
-        response.put("short_url", shortUrl);
+        response.put("invoice_id", invoice.get("id"));
+        response.put("short_url", invoice.get("short_url"));
         return response;
     }
-    
+ 
     public boolean verifyRazorpayWebhookSignature(String payloadBody, String providedSignature) {
         try {
             String generatedSignature = generateHmacSha256Hex(payloadBody);

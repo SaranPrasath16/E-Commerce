@@ -1,16 +1,21 @@
 package com.ecommerce.services.email;
 
+import java.io.File;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import com.ecommerce.model.CartItems;
 import com.ecommerce.model.Orders;
 import com.ecommerce.model.Product;
 import com.ecommerce.model.User;
+
+import jakarta.mail.internet.MimeMessage;
 
 @Service
 public class EmailService {
@@ -183,6 +188,38 @@ public class EmailService {
 
         message.setText(emailBody);
         mailSender.send(message);
+    }
+    
+    public void sendOrderConfirmationWithInvoice(String toEmail, String customerName, String orderId, File invoicePdfFile) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+            helper.setTo(toEmail);
+            helper.setFrom("QuickPikk <quickpikk1@gmail.com>");
+            helper.setSubject("🧾 Your Order "+orderId+" is Confirmed");
+
+            String emailBody = "Hi " + customerName + ",\n\n"
+                    + "We're happy to let you know that your order with QuickPikk is placed successfully! 🎉\n"
+            		+ "We will share tracking details within 24 - 48 hours.\n\n"
+                    + "🛍️ Order ID: " + orderId + "\n\n"
+                    + "We've attached your invoice to this email for your reference.\n\n"
+                    + "Thanks for shopping with QuickPikk – we can't wait to serve you again! 😊\n\n"
+                    + "Warm regards,\n"
+                    + "QuickPikk Team";
+
+            helper.setText(emailBody);
+
+            FileSystemResource file = new FileSystemResource(invoicePdfFile);
+            helper.addAttachment("Invoice_" + orderId + ".pdf", file);
+
+            mailSender.send(message);
+            System.out.println("Order confirmation email sent to " + toEmail);
+
+        } catch (Exception e) {
+            System.err.println("Error sending order confirmation email: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
 

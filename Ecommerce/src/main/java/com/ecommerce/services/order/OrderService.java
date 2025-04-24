@@ -1,5 +1,6 @@
 package com.ecommerce.services.order;
 
+import java.io.File;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -10,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -36,6 +36,7 @@ import com.ecommerce.services.cart.CartService;
 import com.ecommerce.services.email.EmailService;
 import com.ecommerce.services.product.ProductService;
 import com.ecommerce.services.razorpay.RazorpayService;
+import com.ecommerce.util.InvoicePdfGenerator;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.result.UpdateResult;
@@ -51,13 +52,12 @@ public class OrderService {
 	private final UserRepo userRepo;
 	private final EmailService emailService;
 	private final MongoTemplate mongotemplate;
+	private final InvoicePdfGenerator invoicePdfGenerator;
 	private String paymentId;
 	
-
-
 	public OrderService(CartService cartService, ProductService productService, OrderRepo orderRepo,
 			PaymentRepo paymentRepo, RazorpayService razorpayService, UserRepo userRepo, EmailService emailService,
-			MongoTemplate mongotemplate) {
+			MongoTemplate mongotemplate, InvoicePdfGenerator invoicePdfGenerator) {
 		super();
 		this.cartService = cartService;
 		this.productService = productService;
@@ -67,6 +67,7 @@ public class OrderService {
 		this.userRepo = userRepo;
 		this.emailService = emailService;
 		this.mongotemplate = mongotemplate;
+		this.invoicePdfGenerator = invoicePdfGenerator;
 	}
 
 	public Map<String, Object> checkout() {
@@ -103,12 +104,13 @@ public class OrderService {
 	        throw new ResourceNotFoundException("All items are out of stock. No payment link generated.");
 	    }
 	    try {
-	        Map<String, String> paymentLinkData = razorpayService.createPaymentLink(finalAmount, user.getUserName(), user.getEmail());
+	        Map<String, String> paymentLinkData = razorpayService.generateInvoice(user.getUserName(), user.getEmail(),finalAmount);
 	        String paymentLinkUrl = paymentLinkData.get("short_url");
 
 	        Payment payment = new Payment(
 	                cartId,
 	                paymentLinkData.get("payment_link_id"),
+	                null,
 	                null,
 	                null,
 	                "INITIATED",
@@ -189,6 +191,7 @@ public class OrderService {
 
 	    String paymentStatus = (String) paymentEntity.get("status");
 	    String razorOrderId = (String) paymentEntity.get("order_id");
+	    String razorInvoiceId = (String) paymentEntity.get("invoice_id");
 	    String razorPaymentId = (String) paymentEntity.get("id");
 
 	    if (paymentId == null || paymentId.isEmpty()) {
@@ -200,6 +203,7 @@ public class OrderService {
 	    }
 	    payment.setRazorOrderId(razorOrderId);
 	    payment.setRazorPaymentId(razorPaymentId);
+	    payment.setInvoiceId(razorInvoiceId);
 	    payment.setPaymentStatus(paymentStatus);
 	    paymentRepo.save(payment);
 	    
@@ -208,6 +212,8 @@ public class OrderService {
 	    }
 
 	    String userId = payment.getUserId();
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 	    Cart cart = cartService.getCart(userId);
 	    List<CartItems> cartItems = cartService.getCartItems(userId);
 
@@ -220,28 +226,38 @@ public class OrderService {
 	    ZonedDateTime nowInIST = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
 	    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 	    String orderDateTime = nowInIST.format(formatter);
-	    int totalQuantity=0;
 
-	    for (CartItems item : cartItems) {
-	        try {
-	            Orders order = new Orders(userId,cartItems,cart.getTotalAmount(),totalQuantity+item.getQuantity(),payment.getPaymentId(),"PAID","ORDER_CONFIRMED",orderDateTime);
-
-	            Orders savedOrder = orderRepo.save(order);
+	    try {
+	        int totalQuantity = cartItems.stream().mapToInt(CartItems::getQuantity).sum();
+	        Orders order = new Orders(
+	            userId,
+	            cartItems,
+	            cart.getTotalAmount(),
+	            totalQuantity,
+	            payment.getPaymentId(),
+	            "PAID",
+	            "ORDER_CONFIRMED",
+	            orderDateTime
+	        );
+	        Orders savedOrder = orderRepo.save(order);
+	        for (CartItems item : cartItems) {
 	            productService.updateProductStock(item.getProductId(), item.getQuantity());
-	            successful.add(savedOrder.getOrderId());
-	    	    cartService.deleteSelectedCartItems(userId, cartItems);
-	            List<User> ordersAdmins = userRepo.findOrdersAdmins();
-	            List<String> ordersAdminEmails = ordersAdmins.stream()
-	                                                       .map(User::getEmail)
-	                                                       .collect(Collectors.toList());
-	            emailService.intimateOrderAdmins(ordersAdminEmails, savedOrder);
-
-	        } catch (Exception e) {
-	            failed.add(item.getName());
-	            e.printStackTrace();
 	        }
-	    }
 
+	        cartService.deleteSelectedCartItems(userId, cartItems);
+	        List<User> ordersAdmins = userRepo.findOrdersAdmins();
+	        List<String> ordersAdminEmails = ordersAdmins.stream()
+	                                                     .map(User::getEmail)
+	                                                     .collect(Collectors.toList());
+	        emailService.intimateOrderAdmins(ordersAdminEmails, savedOrder);
+	        File invoicePdf = invoicePdfGenerator.generateAndSaveInvoice(savedOrder, payment);
+	        emailService.sendOrderConfirmationWithInvoice(user.getEmail(), user.getUserName(), savedOrder.getOrderId(), invoicePdf);
+	        successful.add(savedOrder.getOrderId());
+
+	    } catch (Exception e) {
+	        cartItems.forEach(item -> failed.add(item.getName()));
+	        e.printStackTrace();
+	    }
 	    OrderAddResponseDTO response = new OrderAddResponseDTO();
 	    response.setSuccessfulOrders(successful);
 	    response.setFailedOrders(failed);
