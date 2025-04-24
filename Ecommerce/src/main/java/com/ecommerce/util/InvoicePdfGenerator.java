@@ -38,7 +38,7 @@ public class InvoicePdfGenerator {
     public File generateAndSaveInvoice(Orders order, Payment payment) {
         try {
             ByteArrayInputStream bis = generate(order, payment);
-            File file = new File("Invoice_" + payment.getInvoiceId() + ".pdf");
+            File file = new File("Invoice_" + payment.getRazorInvoiceId() + ".pdf");
             FileOutputStream fos = new FileOutputStream(file);
             byte[] buffer = new byte[1024];
             int length;
@@ -82,9 +82,9 @@ public class InvoicePdfGenerator {
             meta.setWidthPercentage(100);
             meta.setSpacingBefore(10);
             meta.addCell(getCell("Order Number: " + order.getOrderId(), PdfPCell.ALIGN_LEFT));
-            meta.addCell(getCell("Invoice Number: " + payment.getInvoiceId(), PdfPCell.ALIGN_RIGHT));
+            meta.addCell(getCell("Invoice Number: " + payment.getRazorInvoiceId(), PdfPCell.ALIGN_RIGHT));
             meta.addCell(getCell("Order Date: " + order.getOrderDateTime(), PdfPCell.ALIGN_LEFT));
-            meta.addCell(getCell("Invoice Date: " + payment.getOrderDateTime(), PdfPCell.ALIGN_RIGHT));
+            meta.addCell(getCell("Invoice Date: " + payment.getPaymentDateTime(), PdfPCell.ALIGN_RIGHT));
             document.add(meta);
 
             document.add(new Paragraph(" "));
@@ -116,9 +116,9 @@ public class InvoicePdfGenerator {
             document.add(total);
             //document.add(new Paragraph("Amount in Words: " + convertToWords(order.getTotalAmount()) + " only"));
             document.add(new Paragraph(" ")); 
-            document.add(new Paragraph("Payment Mode: " + payment.getPaymentStatus()));
-            document.add(new Paragraph("Transaction ID: " + payment.getRazorPaymentId()));
-            document.add(new Paragraph("Date & Time: " + payment.getOrderDateTime()));
+            document.add(new Paragraph("Payment Mode: " + payment.getPaymentMethod()));
+            document.add(new Paragraph("Transaction ID: " + payment.getTranscationId()));
+            document.add(new Paragraph("Date & Time: " + payment.getPaymentDateTime()));
             document.add(new Paragraph(" "));
             document.add(new Paragraph("Sold By: " + "QuickPikk"));
             document.add(new Paragraph("Bengaluru, Karnataka, India"));

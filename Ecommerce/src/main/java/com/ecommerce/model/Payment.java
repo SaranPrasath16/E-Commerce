@@ -13,23 +13,31 @@ public class Payment {
 	@Id
 	private String paymentId;
 	private String userId;
-	private String razorPaymentLinkId;
 	private String razorOrderId;
 	private String razorPaymentId;
-	private String invoiceId;
+	private String razorInvoiceId;
+	private String transcationId;
+	private String paymentMethod;
     private String paymentStatus;
-	private String orderDateTime;
-	public String getInvoiceId() {
-		return invoiceId;
+	private String paymentDateTime;
+	
+	public String getTranscationId() {
+		return transcationId;
 	}
-	public void setInvoiceId(String invoiceId) {
-		this.invoiceId = invoiceId;
+	public void setTranscationId(String transcationId) {
+		this.transcationId = transcationId;
 	}
-	public String getRazorPaymentLinkId() {
-		return razorPaymentLinkId;
+	public String getPaymentMethod() {
+		return paymentMethod;
 	}
-	public void setRazorPaymentLinkId(String razorPaymentLinkId) {
-		this.razorPaymentLinkId = razorPaymentLinkId;
+	public void setPaymentMethod(String paymentMethod) {
+		this.paymentMethod = paymentMethod;
+	}
+	public String getRazorInvoiceId() {
+		return razorInvoiceId;
+	}
+	public void setRazorInvoiceId(String razorInvoiceId) {
+		this.razorInvoiceId = razorInvoiceId;
 	}
 	public String getUserId() {
 		return userId;
@@ -61,23 +69,25 @@ public class Payment {
 	public void setPaymentStatus(String paymentStatus) {
 		this.paymentStatus = paymentStatus;
 	}
-	public String getOrderDateTime() {
-		return orderDateTime;
+	public String getPaymentDateTime() {
+		return paymentDateTime;
 	}
-	public void setOrderDateTime(String orderDateTime) {
-		this.orderDateTime = orderDateTime;
+	public void setPaymentDateTime(String paymentDateTime) {
+		this.paymentDateTime = paymentDateTime;
 	}
 
-	public Payment(String userId, String razorPaymentLinkId, String razorOrderId, String razorPaymentId,
-			String invoiceId, String paymentStatus, String orderDateTime) {
+
+	public Payment(String userId, String razorOrderId, String razorPaymentId, String razorInvoiceId,
+			String transcationId, String paymentMethod, String paymentStatus, String paymentDateTime) {
 		this();
 		this.userId = userId;
-		this.razorPaymentLinkId = razorPaymentLinkId;
 		this.razorOrderId = razorOrderId;
 		this.razorPaymentId = razorPaymentId;
-		this.invoiceId = invoiceId;
+		this.razorInvoiceId = razorInvoiceId;
+		this.transcationId = transcationId;
+		this.paymentMethod = paymentMethod;
 		this.paymentStatus = paymentStatus;
-		this.orderDateTime = orderDateTime;
+		this.paymentDateTime = paymentDateTime;
 	}
 	public Payment() {
         if (this.paymentId == null || this.paymentId.isEmpty()) {

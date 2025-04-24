@@ -109,7 +109,8 @@ public class OrderService {
 
 	        Payment payment = new Payment(
 	                cartId,
-	                paymentLinkData.get("payment_link_id"),
+	                null,
+	                null,
 	                null,
 	                null,
 	                null,
@@ -184,15 +185,17 @@ public class OrderService {
 	    Map<String, Object> payloadMap = (Map<String, Object>) payload.get("payload");
 	    Map<String, Object> paymentWrapper = (Map<String, Object>) payloadMap.get("payment");
 	    Map<String, Object> paymentEntity = (paymentWrapper != null) ? (Map<String, Object>) paymentWrapper.get("entity") : null;
-
 	    if (paymentEntity == null) {
 	        throw new IllegalStateException("Payment entity is missing");
 	    }
+	    Map<String, Object> acquirerData = (Map<String, Object>) paymentEntity.get("acquirer_data");
+	    String bankTransactionId = (acquirerData != null) ? (String) acquirerData.get("bank_transaction_id") : null;
 
 	    String paymentStatus = (String) paymentEntity.get("status");
 	    String razorOrderId = (String) paymentEntity.get("order_id");
 	    String razorInvoiceId = (String) paymentEntity.get("invoice_id");
 	    String razorPaymentId = (String) paymentEntity.get("id");
+	    String paymentMethod = (String) paymentEntity.get("method");
 
 	    if (paymentId == null || paymentId.isEmpty()) {
 	        throw new ResourceNotFoundException("Payment Id is not found");
@@ -203,8 +206,10 @@ public class OrderService {
 	    }
 	    payment.setRazorOrderId(razorOrderId);
 	    payment.setRazorPaymentId(razorPaymentId);
-	    payment.setInvoiceId(razorInvoiceId);
+	    payment.setRazorInvoiceId(razorInvoiceId);
 	    payment.setPaymentStatus(paymentStatus);
+	    payment.setTranscationId(bankTransactionId);
+	    payment.setPaymentMethod(paymentMethod);
 	    paymentRepo.save(payment);
 	    
 	    if ("failed".equalsIgnoreCase(paymentStatus)) {
